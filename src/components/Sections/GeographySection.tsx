@@ -1,7 +1,6 @@
 import { Globe } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
-import { useFilterOptions } from '../../hooks/useModeration';
 import { baseChartOptions, CHART_COLORS } from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
