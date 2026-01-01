@@ -7,7 +7,6 @@ import styles from './Section.module.css';
 
 export function GeographySection() {
   const { aggregations, stats, data } = useFilteredData();
-  const { data: filterOptions } = useFilterOptions();
 
   // Sort countries by count (country codes from data)
   const countryData = Object.entries(aggregations.byCountry)

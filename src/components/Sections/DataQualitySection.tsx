@@ -1,7 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
-import { baseChartOptions, CHART_COLORS } from '../../utils/chartConfig';
+import { baseChartOptions } from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
 export function DataQualitySection() {

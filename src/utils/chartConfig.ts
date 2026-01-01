@@ -89,13 +89,13 @@ export function getDecisionTypeColor(decisionType: string): string {
 
 // Legacy exports for backward compatibility (will use dynamic functions)
 export const PLATFORM_COLORS: Record<string, string> = new Proxy({} as Record<string, string>, {
-  get(target, prop: string) {
+  get(_target, prop: string) {
     return getPlatformColor(prop);
   }
 });
 
 export const DECISION_TYPE_COLORS: Record<string, string> = new Proxy({} as Record<string, string>, {
-  get(target, prop: string) {
+  get(_target, prop: string) {
     return getDecisionTypeColor(prop);
   }
 });
