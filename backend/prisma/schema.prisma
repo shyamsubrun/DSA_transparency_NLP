@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tables de référence
+model Platform {
+  id                 Int                 @id @default(autoincrement())
+  name               String              @unique @db.VarChar(100)
+  createdAt          DateTime            @default(now()) @map("created_at")
+  moderationEntries  ModerationEntry[]
+
+  @@map("platforms")
+}
+
+model Category {
+  id                 Int                 @id @default(autoincrement())
+  name               String              @unique @db.VarChar(100)
+  createdAt          DateTime            @default(now()) @map("created_at")
+  moderationEntries  ModerationEntry[]
+
+  @@map("categories")
+}
+
+model DecisionType {
+  id                 Int                 @id @default(autoincrement())
+  name               String              @unique @db.VarChar(100)
+  createdAt          DateTime            @default(now()) @map("created_at")
+  moderationEntries  ModerationEntry[]
+
+  @@map("decision_types")
+}
+
+model DecisionGround {
+  id                 Int                 @id @default(autoincrement())
+  name               String              @unique
+  createdAt          DateTime            @default(now()) @map("created_at")
+  moderationEntries  ModerationEntry[]
+
+  @@map("decision_grounds")
+}
+
+model ContentType {
+  id                 Int                 @id @default(autoincrement())
+  name               String              @unique @db.VarChar(50)
+  createdAt          DateTime            @default(now()) @map("created_at")
+  moderationEntries  ModerationEntry[]
+
+  @@map("content_types")
+}
+
+// Table principale
+model ModerationEntry {
+  id                         String         @id @db.VarChar(50)
+  applicationDate            DateTime       @map("application_date") @db.Date
+  contentDate                DateTime?      @map("content_date") @db.Date
+  platformId                 Int            @map("platform_id")
+  categoryId                 Int            @map("category_id")
+  decisionTypeId             Int            @map("decision_type_id")
+  decisionGroundId           Int            @map("decision_ground_id")
+  incompatibleContentGround  String?        @map("incompatible_content_ground")
+  contentTypeId              Int?           @map("content_type_id")
+  automatedDetection         Boolean?       @map("automated_detection")
+  automatedDecision          Boolean?       @map("automated_decision")
+  countryCode                String?        @map("country_code") @db.Char(2)
+  territorialScope           Json?          @map("territorial_scope") @db.JsonB
+  language                   String?        @db.VarChar(10)
+  delayDays                  Int?           @map("delay_days")
+  createdAt                  DateTime       @default(now()) @map("created_at")
+
+  platform       Platform        @relation(fields: [platformId], references: [id])
+  category       Category        @relation(fields: [categoryId], references: [id])
+  decisionType   DecisionType    @relation(fields: [decisionTypeId], references: [id])
+  decisionGround DecisionGround  @relation(fields: [decisionGroundId], references: [id])
+  contentType    ContentType?    @relation(fields: [contentTypeId], references: [id])
+
+  @@index([applicationDate])
+  @@index([platformId])
+  @@index([categoryId])
+  @@index([decisionTypeId])
+  @@index([countryCode])
+  @@map("moderation_entries")
+}
+
