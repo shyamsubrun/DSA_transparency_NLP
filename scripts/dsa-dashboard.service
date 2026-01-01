@@ -1,0 +1,32 @@
+[Unit]
+Description=DSA Dashboard Podman Compose Service
+Documentation=https://github.com/raouf-rak/dsa-dashboard
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/raouf.abdallah/dsa-dashboard
+ExecStart=/usr/bin/podman-compose up -d
+ExecStop=/usr/bin/podman-compose down
+ExecReload=/usr/bin/podman-compose restart
+User=raouf.abdallah
+Group=raouf.abdallah
+
+# Restart policy
+Restart=on-failure
+RestartSec=10
+
+# Environment
+Environment="PODMAN_SYSTEMD_UNIT=%n"
+
+# Security
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/raouf.abdallah/dsa-dashboard
+
+[Install]
+WantedBy=multi-user.target
+

@@ -60,7 +60,10 @@ export function PlatformsSection() {
     grid: { ...baseChartOptions.grid, top: screenSize === 'mobile' ? '25%' : '20%' },
     xAxis: {
       type: 'category',
-      data: platformData.map(([name]) => name),
+      data: platformData.map(([name]) => {
+        const trimmed = name.trim();
+        return trimmed.length > 20 ? trimmed.substring(0, 20) + '...' : trimmed;
+      }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { 
         color: '#64748b', 

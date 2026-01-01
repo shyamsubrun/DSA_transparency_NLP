@@ -13,18 +13,26 @@ export const CHART_COLORS = [
   '#84cc16', // Lime
 ];
 
-export const PLATFORM_COLORS: Record<string, string> = {
+// Known platform colors (for popular platforms)
+const KNOWN_PLATFORM_COLORS: Record<string, string> = {
   'Meta': '#1877f2',
   'TikTok': '#ff0050',
   'X': '#1da1f2',
+  'Twitter': '#1da1f2',
   'YouTube': '#ff0000',
   'LinkedIn': '#0a66c2',
   'Snapchat': '#fffc00',
   'Pinterest': '#bd081c',
   'Amazon': '#ff9900',
+  'Google Shopping': '#4285f4',
+  'Temu': '#ff6b00',
+  'AliExpress': '#ff6600',
+  'Shopify': '#96bf48',
+  'eBay': '#0064d2',
 };
 
-export const DECISION_TYPE_COLORS: Record<string, string> = {
+// Known decision type colors
+const KNOWN_DECISION_TYPE_COLORS: Record<string, string> = {
   'Removal': '#ef4444',
   'Visibility Restriction': '#f59e0b',
   'Account Suspension': '#8b5cf6',
@@ -33,6 +41,64 @@ export const DECISION_TYPE_COLORS: Record<string, string> = {
   'Age Restriction': '#ec4899',
   'Geo-Blocking': '#10b981',
 };
+
+// Generate a color based on string hash for consistent coloring
+function stringToColor(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash % 360);
+  // Use a more vibrant saturation and lightness
+  return `hsl(${hue}, 65%, 50%)`;
+}
+
+// Get platform color dynamically
+export function getPlatformColor(platform: string): string {
+  // Try known colors first
+  if (KNOWN_PLATFORM_COLORS[platform]) {
+    return KNOWN_PLATFORM_COLORS[platform];
+  }
+  // Try case-insensitive match
+  const lowerPlatform = platform.toLowerCase();
+  for (const [key, color] of Object.entries(KNOWN_PLATFORM_COLORS)) {
+    if (key.toLowerCase() === lowerPlatform) {
+      return color;
+    }
+  }
+  // Generate consistent color from string
+  return stringToColor(platform);
+}
+
+// Get decision type color dynamically
+export function getDecisionTypeColor(decisionType: string): string {
+  // Try known colors first
+  if (KNOWN_DECISION_TYPE_COLORS[decisionType]) {
+    return KNOWN_DECISION_TYPE_COLORS[decisionType];
+  }
+  // Try case-insensitive match
+  const lowerType = decisionType.toLowerCase();
+  for (const [key, color] of Object.entries(KNOWN_DECISION_TYPE_COLORS)) {
+    if (key.toLowerCase() === lowerType) {
+      return color;
+    }
+  }
+  // Generate consistent color from string
+  return stringToColor(decisionType);
+}
+
+// Legacy exports for backward compatibility (will use dynamic functions)
+export const PLATFORM_COLORS: Record<string, string> = new Proxy({} as Record<string, string>, {
+  get(target, prop: string) {
+    return getPlatformColor(prop);
+  }
+});
+
+export const DECISION_TYPE_COLORS: Record<string, string> = new Proxy({} as Record<string, string>, {
+  get(target, prop: string) {
+    return getDecisionTypeColor(prop);
+  }
+});
 
 export const baseChartOptions = {
   grid: {

@@ -1,49 +1,27 @@
 import { Globe } from 'lucide-react';
 import ReactECharts from 'echarts-for-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
+import { useFilterOptions } from '../../hooks/useModeration';
 import { baseChartOptions, CHART_COLORS } from '../../utils/chartConfig';
-import { EU_COUNTRIES } from '../../data/types';
 import styles from './Section.module.css';
 
-// Country name to ISO mapping for the map
-const countryToISO: Record<string, string> = {
-  'Germany': 'DE',
-  'France': 'FR',
-  'Italy': 'IT',
-  'Spain': 'ES',
-  'Poland': 'PL',
-  'Romania': 'RO',
-  'Netherlands': 'NL',
-  'Belgium': 'BE',
-  'Greece': 'GR',
-  'Czech Republic': 'CZ',
-  'Portugal': 'PT',
-  'Sweden': 'SE',
-  'Hungary': 'HU',
-  'Austria': 'AT',
-  'Bulgaria': 'BG',
-  'Denmark': 'DK',
-  'Finland': 'FI',
-  'Slovakia': 'SK',
-  'Ireland': 'IE',
-  'Croatia': 'HR',
-  'Lithuania': 'LT',
-  'Slovenia': 'SI',
-  'Latvia': 'LV',
-  'Estonia': 'EE',
-  'Cyprus': 'CY',
-  'Luxembourg': 'LU',
-  'Malta': 'MT',
-};
-
 export function GeographySection() {
-  const { aggregations, stats } = useFilteredData();
+  const { aggregations, stats, data } = useFilteredData();
+  const { data: filterOptions } = useFilterOptions();
 
-  // Sort countries by count
+  // Sort countries by count (country codes from data)
   const countryData = Object.entries(aggregations.byCountry)
     .sort((a, b) => b[1] - a[1]);
 
   const maxCount = countryData[0]?.[1] || 1;
+
+  // Get language distribution from actual data
+  const languageData = data.reduce((acc, entry) => {
+    if (entry.language) {
+      acc[entry.language] = (acc[entry.language] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
 
   // Horizontal bar: Top countries
   const countryBarOption = {
@@ -113,8 +91,8 @@ export function GeographySection() {
       label: {
         show: true,
         formatter: (params: { name: string }) => {
-          const code = countryToISO[params.name];
-          return code || params.name.substring(0, 3).toUpperCase();
+          // params.name is already a country code (2 letters)
+          return params.name.length === 2 ? params.name : params.name.substring(0, 2).toUpperCase();
         },
         fontSize: 10,
         color: '#1e293b',
@@ -135,14 +113,6 @@ export function GeographySection() {
       })),
     }],
   };
-
-  // Country distribution by language
-  const languageData = EU_COUNTRIES.reduce((acc, country) => {
-    const count = aggregations.byCountry[country.name] || 0;
-    if (!acc[country.lang]) acc[country.lang] = 0;
-    acc[country.lang] += count;
-    return acc;
-  }, {} as Record<string, number>);
 
   const languageChartData = Object.entries(languageData)
     .filter(([, count]) => count > 0)

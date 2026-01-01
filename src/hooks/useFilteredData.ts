@@ -1,99 +1,24 @@
 import { useMemo } from 'react';
 import type { ModerationEntry, KPIStats } from '../data/types';
-import { mockData } from '../data/mockData';
-import { useFilters } from '../context/FilterContext';
+import { useModerationData, useModerationStats } from './useModeration';
 
 export function useFilteredData() {
-  const { filters } = useFilters();
+  const { data: response, isLoading, error, isError } = useModerationData();
+  const { data: statsData } = useModerationStats();
 
-  const filteredData = useMemo(() => {
-    // Vérifier que mockData est chargé
-    if (!mockData || mockData.length === 0) {
-      console.error('Mock data is empty or not loaded');
-      return [];
-    }
-    
-    let data = [...mockData];
+  const filteredData = response?.data || [];
 
-    // Date range filter
-    if (filters.dateRange) {
-      data = data.filter(d =>
-        d.application_date >= filters.dateRange!.start &&
-        d.application_date <= filters.dateRange!.end
-      );
-    }
+  // Stats viennent du backend maintenant
+  const stats: KPIStats = statsData || {
+    totalActions: 0,
+    platformCount: 0,
+    averageDelay: 0,
+    automatedDetectionRate: 0,
+    automatedDecisionRate: 0,
+    countryCount: 0
+  };
 
-    // Platform filter
-    if (filters.platforms.length > 0) {
-      data = data.filter(d => filters.platforms.includes(d.platform_name));
-    }
-
-    // Category filter
-    if (filters.categories.length > 0) {
-      data = data.filter(d => filters.categories.includes(d.category));
-    }
-
-    // Decision type filter
-    if (filters.decisionTypes.length > 0) {
-      data = data.filter(d => filters.decisionTypes.includes(d.decision_type));
-    }
-
-    // Decision ground filter
-    if (filters.decisionGrounds.length > 0) {
-      data = data.filter(d => filters.decisionGrounds.includes(d.decision_ground));
-    }
-
-    // Country filter
-    if (filters.countries.length > 0) {
-      data = data.filter(d => filters.countries.includes(d.country));
-    }
-
-    // Content type filter
-    if (filters.contentTypes.length > 0) {
-      data = data.filter(d => filters.contentTypes.includes(d.content_type));
-    }
-
-    // Automated detection filter
-    if (filters.automatedDetection !== null) {
-      data = data.filter(d => d.automated_detection === filters.automatedDetection);
-    }
-
-    // Automated decision filter
-    if (filters.automatedDecision !== null) {
-      data = data.filter(d => d.automated_decision === filters.automatedDecision);
-    }
-
-    return data;
-  }, [filters]);
-
-  // Compute KPI statistics
-  const stats: KPIStats = useMemo(() => {
-    const totalActions = filteredData.length;
-    const platforms = new Set(filteredData.map(d => d.platform_name));
-    const countries = new Set(filteredData.map(d => d.country));
-    
-    const averageDelay = totalActions > 0
-      ? filteredData.reduce((sum, d) => sum + d.delay_days, 0) / totalActions
-      : 0;
-    
-    const automatedDetectionCount = filteredData.filter(d => d.automated_detection).length;
-    const automatedDecisionCount = filteredData.filter(d => d.automated_decision).length;
-
-    return {
-      totalActions,
-      platformCount: platforms.size,
-      averageDelay: Math.round(averageDelay * 10) / 10,
-      automatedDetectionRate: totalActions > 0
-        ? Math.round((automatedDetectionCount / totalActions) * 100)
-        : 0,
-      automatedDecisionRate: totalActions > 0
-        ? Math.round((automatedDecisionCount / totalActions) * 100)
-        : 0,
-      countryCount: countries.size
-    };
-  }, [filteredData]);
-
-  // Aggregated data for charts
+  // Aggregations côté client pour les graphiques
   const aggregations = useMemo(() => {
     // Actions by platform
     const byPlatform = filteredData.reduce((acc, d) => {
@@ -121,13 +46,17 @@ export function useFilteredData() {
 
     // Actions by country
     const byCountry = filteredData.reduce((acc, d) => {
-      acc[d.country] = (acc[d.country] || 0) + 1;
+      if (d.country) {
+        acc[d.country] = (acc[d.country] || 0) + 1;
+      }
       return acc;
     }, {} as Record<string, number>);
 
     // Actions by content type
     const byContentType = filteredData.reduce((acc, d) => {
-      acc[d.content_type] = (acc[d.content_type] || 0) + 1;
+      if (d.content_type) {
+        acc[d.content_type] = (acc[d.content_type] || 0) + 1;
+      }
       return acc;
     }, {} as Record<string, number>);
 
@@ -168,6 +97,7 @@ export function useFilteredData() {
 
     // Decision type by content type
     const decisionByContentType = filteredData.reduce((acc, d) => {
+      if (!d.content_type) return acc;
       if (!acc[d.content_type]) acc[d.content_type] = {};
       acc[d.content_type][d.decision_type] = (acc[d.content_type][d.decision_type] || 0) + 1;
       return acc;
@@ -175,6 +105,7 @@ export function useFilteredData() {
 
     // Average delay by content type
     const delayByContentType = filteredData.reduce((acc, d) => {
+      if (!d.content_type || d.delay_days === null) return acc;
       if (!acc[d.content_type]) acc[d.content_type] = { total: 0, count: 0 };
       acc[d.content_type].total += d.delay_days;
       acc[d.content_type].count++;
@@ -233,7 +164,10 @@ export function useFilteredData() {
   return {
     data: filteredData,
     stats,
-    aggregations
+    aggregations,
+    isLoading,
+    isError,
+    error: error as Error | null
   };
 }
 
@@ -257,6 +191,7 @@ export function useTimeSeriesData(data: ModerationEntry[]) {
 
     // Average delay by month
     const delayByMonth = data.reduce((acc, d) => {
+      if (d.delay_days === null) return acc;
       const month = d.application_date.substring(0, 7);
       if (!acc[month]) acc[month] = { total: 0, count: 0 };
       acc[month].total += d.delay_days;
@@ -276,4 +211,3 @@ export function useTimeSeriesData(data: ModerationEntry[]) {
     };
   }, [data]);
 }
-

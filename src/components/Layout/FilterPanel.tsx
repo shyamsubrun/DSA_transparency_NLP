@@ -1,13 +1,6 @@
 import { X, Calendar, Building2, Tag, Gavel, Scale, Globe, FileType, Bot, User } from 'lucide-react';
 import { useFilters } from '../../context/FilterContext';
-import {
-  uniquePlatforms,
-  uniqueCategories,
-  uniqueDecisionTypes,
-  uniqueDecisionGrounds,
-  uniqueCountries,
-  uniqueContentTypes
-} from '../../data/mockData';
+import { useFilterOptions } from '../../hooks/useModeration';
 import styles from './FilterPanel.module.css';
 
 interface FilterPanelProps {
@@ -29,6 +22,17 @@ export function FilterPanel({ isOpen, onClose }: FilterPanelProps) {
     setAutomatedDecision,
     resetFilters
   } = useFilters();
+
+  // Fetch filter options from backend
+  const { data: filterOptions, isLoading: filtersLoading } = useFilterOptions();
+
+  // Use dynamic data from backend, fallback to empty arrays if loading
+  const uniquePlatforms = filterOptions?.platforms || [];
+  const uniqueCategories = filterOptions?.categories || [];
+  const uniqueDecisionTypes = filterOptions?.decisionTypes || [];
+  const uniqueDecisionGrounds = filterOptions?.decisionGrounds || [];
+  const uniqueCountries = filterOptions?.countries || [];
+  const uniqueContentTypes = filterOptions?.contentTypes || [];
 
   const handleMultiSelect = (
     value: string,
@@ -92,18 +96,23 @@ export function FilterPanel({ isOpen, onClose }: FilterPanelProps) {
           <div className={styles.filterGroup}>
             <label className={styles.label}>
               <Building2 size={16} />
-              Platforms
+              Platforms {filtersLoading && <span className={styles.loading}>...</span>}
             </label>
             <div className={styles.chipGrid}>
-              {uniquePlatforms.map(platform => (
-                <button
-                  key={platform}
-                  className={`${styles.chip} ${filters.platforms.includes(platform) ? styles.chipActive : ''}`}
-                  onClick={() => handleMultiSelect(platform, filters.platforms, setPlatforms)}
-                >
-                  {platform}
-                </button>
-              ))}
+              {uniquePlatforms.length > 0 ? (
+                uniquePlatforms.map(platform => (
+                  <button
+                    key={platform}
+                    className={`${styles.chip} ${filters.platforms.includes(platform) ? styles.chipActive : ''}`}
+                    onClick={() => handleMultiSelect(platform, filters.platforms, setPlatforms)}
+                    title={platform}
+                  >
+                    {platform.length > 20 ? `${platform.substring(0, 20)}...` : platform}
+                  </button>
+                ))
+              ) : (
+                <div className={styles.emptyState}>No platforms available</div>
+              )}
             </div>
           </div>
 
@@ -111,18 +120,23 @@ export function FilterPanel({ isOpen, onClose }: FilterPanelProps) {
           <div className={styles.filterGroup}>
             <label className={styles.label}>
               <Tag size={16} />
-              Categories
+              Categories {filtersLoading && <span className={styles.loading}>...</span>}
             </label>
             <div className={styles.chipGrid}>
-              {uniqueCategories.map(category => (
-                <button
-                  key={category}
-                  className={`${styles.chip} ${filters.categories.includes(category) ? styles.chipActive : ''}`}
-                  onClick={() => handleMultiSelect(category, filters.categories, setCategories)}
-                >
-                  {category}
-                </button>
-              ))}
+              {uniqueCategories.length > 0 ? (
+                uniqueCategories.map(category => (
+                  <button
+                    key={category}
+                    className={`${styles.chip} ${filters.categories.includes(category) ? styles.chipActive : ''}`}
+                    onClick={() => handleMultiSelect(category, filters.categories, setCategories)}
+                    title={category}
+                  >
+                    {category.trim().length > 25 ? `${category.trim().substring(0, 25)}...` : category.trim()}
+                  </button>
+                ))
+              ) : (
+                <div className={styles.emptyState}>No categories available</div>
+              )}
             </div>
           </div>
 
@@ -130,18 +144,22 @@ export function FilterPanel({ isOpen, onClose }: FilterPanelProps) {
           <div className={styles.filterGroup}>
             <label className={styles.label}>
               <Gavel size={16} />
-              Decision Types
+              Decision Types {filtersLoading && <span className={styles.loading}>...</span>}
             </label>
             <div className={styles.chipGrid}>
-              {uniqueDecisionTypes.map(type => (
-                <button
-                  key={type}
-                  className={`${styles.chip} ${filters.decisionTypes.includes(type) ? styles.chipActive : ''}`}
-                  onClick={() => handleMultiSelect(type, filters.decisionTypes, setDecisionTypes)}
-                >
-                  {type}
-                </button>
-              ))}
+              {uniqueDecisionTypes.length > 0 ? (
+                uniqueDecisionTypes.map(type => (
+                  <button
+                    key={type}
+                    className={`${styles.chip} ${filters.decisionTypes.includes(type) ? styles.chipActive : ''}`}
+                    onClick={() => handleMultiSelect(type, filters.decisionTypes, setDecisionTypes)}
+                  >
+                    {type}
+                  </button>
+                ))
+              ) : (
+                <div className={styles.emptyState}>No decision types available</div>
+              )}
             </div>
           </div>
 
@@ -149,18 +167,23 @@ export function FilterPanel({ isOpen, onClose }: FilterPanelProps) {
           <div className={styles.filterGroup}>
             <label className={styles.label}>
               <Scale size={16} />
-              Legal Grounds
+              Legal Grounds {filtersLoading && <span className={styles.loading}>...</span>}
             </label>
             <div className={styles.chipGrid}>
-              {uniqueDecisionGrounds.map(ground => (
-                <button
-                  key={ground}
-                  className={`${styles.chip} ${styles.chipSmall} ${filters.decisionGrounds.includes(ground) ? styles.chipActive : ''}`}
-                  onClick={() => handleMultiSelect(ground, filters.decisionGrounds, setDecisionGrounds)}
-                >
-                  {ground}
-                </button>
-              ))}
+              {uniqueDecisionGrounds.length > 0 ? (
+                uniqueDecisionGrounds.map(ground => (
+                  <button
+                    key={ground}
+                    className={`${styles.chip} ${styles.chipSmall} ${filters.decisionGrounds.includes(ground) ? styles.chipActive : ''}`}
+                    onClick={() => handleMultiSelect(ground, filters.decisionGrounds, setDecisionGrounds)}
+                    title={ground.trim()}
+                  >
+                    {ground.trim().length > 30 ? `${ground.trim().substring(0, 30)}...` : ground.trim()}
+                  </button>
+                ))
+              ) : (
+                <div className={styles.emptyState}>No legal grounds available</div>
+              )}
             </div>
           </div>
 
@@ -187,18 +210,22 @@ export function FilterPanel({ isOpen, onClose }: FilterPanelProps) {
           <div className={styles.filterGroup}>
             <label className={styles.label}>
               <FileType size={16} />
-              Content Types
+              Content Types {filtersLoading && <span className={styles.loading}>...</span>}
             </label>
             <div className={styles.chipGrid}>
-              {uniqueContentTypes.map(type => (
-                <button
-                  key={type}
-                  className={`${styles.chip} ${filters.contentTypes.includes(type) ? styles.chipActive : ''}`}
-                  onClick={() => handleMultiSelect(type, filters.contentTypes, setContentTypes)}
-                >
-                  {type}
-                </button>
-              ))}
+              {uniqueContentTypes.length > 0 ? (
+                uniqueContentTypes.map(type => (
+                  <button
+                    key={type}
+                    className={`${styles.chip} ${filters.contentTypes.includes(type) ? styles.chipActive : ''}`}
+                    onClick={() => handleMultiSelect(type, filters.contentTypes, setContentTypes)}
+                  >
+                    {type || 'NULL'}
+                  </button>
+                ))
+              ) : (
+                <div className={styles.emptyState}>No content types available</div>
+              )}
             </div>
           </div>
 

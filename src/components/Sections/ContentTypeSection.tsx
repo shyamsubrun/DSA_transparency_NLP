@@ -26,7 +26,10 @@ export function ContentTypeSection() {
     grid: { ...baseChartOptions.grid, top: screenSize === 'mobile' ? '25%' : '18%' },
     xAxis: {
       type: 'category',
-      data: contentTypeData.map(([name]) => name),
+      data: contentTypeData.map(([name]) => {
+        const trimmed = (name || 'NULL').trim();
+        return trimmed.length > 15 ? trimmed.substring(0, 15) + '...' : trimmed;
+      }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { color: '#64748b', fontSize: 11, rotate: screenSize === 'mobile' ? 45 : 0 },
     },

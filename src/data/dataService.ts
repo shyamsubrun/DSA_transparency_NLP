@@ -1,42 +1,19 @@
-// Data Service - Abstraction layer for API calls
-// This file makes it easy to swap mock data with real API calls
-
+// Data Service - API calls to backend
 import type { ModerationEntry } from './types';
-import { 
-  mockData,
-  uniquePlatforms,
-  uniqueCategories,
-  uniqueDecisionTypes,
-  uniqueDecisionGrounds,
-  uniqueCountries,
-  uniqueContentTypes,
-  uniqueLanguages
-} from './mockData';
 
-// Simulated network delay for realistic behavior
-const SIMULATED_DELAY = 300;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
-async function simulateDelay(): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, SIMULATED_DELAY));
+export interface FetchEntriesResponse {
+  data: ModerationEntry[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
-/**
- * Fetch all moderation data
- * TODO: Replace with real API call: fetch('/api/moderation')
- */
-export async function fetchModerationData(): Promise<ModerationEntry[]> {
-  await simulateDelay();
-  // TODO: Replace with:
-  // const response = await fetch('/api/moderation');
-  // return response.json();
-  return mockData;
-}
-
-/**
- * Fetch filter options (unique values)
- * TODO: Replace with real API call: fetch('/api/filters')
- */
-export async function fetchFilterOptions(): Promise<{
+export interface FilterOptions {
   platforms: string[];
   categories: string[];
   decisionTypes: string[];
@@ -44,27 +21,18 @@ export async function fetchFilterOptions(): Promise<{
   countries: string[];
   contentTypes: string[];
   languages: string[];
-}> {
-  await simulateDelay();
-  // TODO: Replace with:
-  // const response = await fetch('/api/filters');
-  // return response.json();
-  return {
-    platforms: uniquePlatforms,
-    categories: uniqueCategories,
-    decisionTypes: uniqueDecisionTypes,
-    decisionGrounds: uniqueDecisionGrounds,
-    countries: uniqueCountries,
-    contentTypes: uniqueContentTypes,
-    languages: uniqueLanguages
-  };
 }
 
-/**
- * Fetch data with server-side filtering
- * TODO: Implement when backend supports filtering
- */
-export async function fetchFilteredData(filters: {
+export interface KPIStats {
+  totalActions: number;
+  platformCount: number;
+  averageDelay: number;
+  automatedDetectionRate: number;
+  automatedDecisionRate: number;
+  countryCount: number;
+}
+
+interface Filters {
   dateRange?: { start: string; end: string };
   platforms?: string[];
   categories?: string[];
@@ -72,61 +40,103 @@ export async function fetchFilteredData(filters: {
   decisionGrounds?: string[];
   countries?: string[];
   contentTypes?: string[];
-  automatedDetection?: boolean;
-  automatedDecision?: boolean;
-}): Promise<ModerationEntry[]> {
-  await simulateDelay();
-  
-  // TODO: Replace with:
-  // const params = new URLSearchParams();
-  // Object.entries(filters).forEach(([key, value]) => {
-  //   if (value !== undefined) params.append(key, JSON.stringify(value));
-  // });
-  // const response = await fetch(`/api/moderation?${params}`);
-  // return response.json();
-  
-  // For now, filter client-side
-  let filtered = [...mockData];
-  
-  if (filters.dateRange) {
-    filtered = filtered.filter(d => 
-      d.application_date >= filters.dateRange!.start &&
-      d.application_date <= filters.dateRange!.end
-    );
-  }
-  
-  if (filters.platforms?.length) {
-    filtered = filtered.filter(d => filters.platforms!.includes(d.platform_name));
-  }
-  
-  if (filters.categories?.length) {
-    filtered = filtered.filter(d => filters.categories!.includes(d.category));
-  }
-  
-  if (filters.decisionTypes?.length) {
-    filtered = filtered.filter(d => filters.decisionTypes!.includes(d.decision_type));
-  }
-  
-  if (filters.decisionGrounds?.length) {
-    filtered = filtered.filter(d => filters.decisionGrounds!.includes(d.decision_ground));
-  }
-  
-  if (filters.countries?.length) {
-    filtered = filtered.filter(d => filters.countries!.includes(d.country));
-  }
-  
-  if (filters.contentTypes?.length) {
-    filtered = filtered.filter(d => filters.contentTypes!.includes(d.content_type));
-  }
-  
-  if (filters.automatedDetection !== undefined) {
-    filtered = filtered.filter(d => d.automated_detection === filters.automatedDetection);
-  }
-  
-  if (filters.automatedDecision !== undefined) {
-    filtered = filtered.filter(d => d.automated_decision === filters.automatedDecision);
-  }
-  
-  return filtered;
+  automatedDetection?: boolean | null;
+  automatedDecision?: boolean | null;
 }
 
+/**
+ * Fetch moderation data with filters and pagination
+ */
+export async function fetchModerationData(
+  filters?: Filters,
+  page = 1,
+  limit = 1000
+): Promise<FetchEntriesResponse> {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit)
+  });
+
+  if (filters?.dateRange) {
+    params.append('startDate', filters.dateRange.start);
+    params.append('endDate', filters.dateRange.end);
+  }
+
+  if (filters?.platforms && filters.platforms.length > 0) {
+    filters.platforms.forEach(p => params.append('platforms', p));
+  }
+
+  if (filters?.categories && filters.categories.length > 0) {
+    filters.categories.forEach(c => params.append('categories', c));
+  }
+
+  if (filters?.decisionTypes && filters.decisionTypes.length > 0) {
+    filters.decisionTypes.forEach(dt => params.append('decisionTypes', dt));
+  }
+
+  if (filters?.decisionGrounds && filters.decisionGrounds.length > 0) {
+    filters.decisionGrounds.forEach(dg => params.append('decisionGrounds', dg));
+  }
+
+  if (filters?.countries && filters.countries.length > 0) {
+    filters.countries.forEach(c => params.append('countries', c));
+  }
+
+  if (filters?.contentTypes && filters.contentTypes.length > 0) {
+    filters.contentTypes.forEach(ct => params.append('contentTypes', ct));
+  }
+
+  if (filters?.automatedDetection !== undefined && filters?.automatedDetection !== null) {
+    params.append('automatedDetection', String(filters.automatedDetection));
+  }
+
+  if (filters?.automatedDecision !== undefined && filters?.automatedDecision !== null) {
+    params.append('automatedDecision', String(filters.automatedDecision));
+  }
+
+  const response = await fetch(`${API_BASE_URL}/moderation?${params}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch moderation data: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch filter options
+ */
+export async function fetchFilterOptions(): Promise<FilterOptions> {
+  const response = await fetch(`${API_BASE_URL}/filters`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch filter options: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Fetch KPI statistics
+ */
+export async function fetchStats(filters?: Filters): Promise<KPIStats> {
+  const params = new URLSearchParams();
+
+  if (filters?.dateRange) {
+    params.append('startDate', filters.dateRange.start);
+    params.append('endDate', filters.dateRange.end);
+  }
+
+  if (filters?.platforms && filters.platforms.length > 0) {
+    filters.platforms.forEach(p => params.append('platforms', p));
+  }
+
+  if (filters?.categories && filters.categories.length > 0) {
+    filters.categories.forEach(c => params.append('categories', c));
+  }
+
+  const response = await fetch(`${API_BASE_URL}/moderation/stats?${params}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch stats: ${response.statusText}`);
+  }
+
+  return response.json();
+}

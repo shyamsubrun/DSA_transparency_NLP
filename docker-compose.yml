@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: dsa-backend
+    ports:
+      - "3001:3001"
+    environment:
+      # Utiliser host.docker.internal pour accéder à PostgreSQL sur l'hôte
+      # Si cela ne fonctionne pas, utiliser l'IP de la VM (35.223.190.104)
+      - DATABASE_URL=postgresql://dsa_admin:Mohamed2025!@host.docker.internal:5432/dsa
+      - NODE_ENV=production
+      - PORT=3001
+      - FRONTEND_URL=http://35.223.190.104
+    networks:
+      - dsa-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - VITE_API_BASE_URL=/api
+    container_name: dsa-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - dsa-network
+    restart: unless-stopped
+
+networks:
+  dsa-network:
+    driver: bridge
+

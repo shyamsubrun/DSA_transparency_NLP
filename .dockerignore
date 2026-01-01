@@ -1,0 +1,44 @@
+# Node modules
+node_modules
+backend/node_modules
+
+# Build artifacts
+dist
+build
+backend/dist
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files (seront passés via docker-compose)
+.env.local
+backend/.env
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Tests
+coverage
+
+# Documentation
+*.md
+!README.md
+
+# Database files
+database/
+scripts/
+
+# Source data
+src/data/dsa-download/
+
+# Cursor
+.cursor/
+

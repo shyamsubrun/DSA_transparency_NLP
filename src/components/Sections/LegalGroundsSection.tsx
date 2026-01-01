@@ -23,9 +23,10 @@ export function LegalGroundsSection() {
     },
     yAxis: {
       type: 'category',
-      data: groundsData.slice(0, 10).map(([name]) => 
-        name.length > 35 ? name.substring(0, 35) + '...' : name
-      ).reverse(),
+      data: groundsData.slice(0, 10).map(([name]) => {
+        const trimmed = name.trim();
+        return trimmed.length > 35 ? trimmed.substring(0, 35) + '...' : trimmed;
+      }).reverse(),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { 
         color: '#1e293b', 
@@ -37,9 +38,10 @@ export function LegalGroundsSection() {
     tooltip: {
       ...baseChartOptions.tooltip,
       formatter: (params: { name: string; value: number }) => {
+        const trimmedParam = params.name.replace('...', '').trim();
         const fullName = groundsData.find(([name]) => 
-          name.startsWith(params.name.replace('...', ''))
-        )?.[0] || params.name;
+          name.trim().startsWith(trimmedParam)
+        )?.[0]?.trim() || params.name.trim();
         return `${fullName}<br/>Actions: <strong>${params.value}</strong>`;
       },
     },
@@ -116,13 +118,16 @@ export function LegalGroundsSection() {
   };
 
   // Treemap: Category by decision ground
-  const treemapData = Object.entries(aggregations.categoryByGround).map(([ground, categories]) => ({
-    name: ground.length > 25 ? ground.substring(0, 25) + '...' : ground,
-    children: Object.entries(categories).map(([cat, count]) => ({
-      name: cat,
-      value: count,
-    })),
-  }));
+  const treemapData = Object.entries(aggregations.categoryByGround).map(([ground, categories]) => {
+    const trimmedGround = ground.trim();
+    return {
+      name: trimmedGround.length > 25 ? trimmedGround.substring(0, 25) + '...' : trimmedGround,
+      children: Object.entries(categories).map(([cat, count]) => ({
+        name: cat.trim(),
+        value: count,
+      })),
+    };
+  });
 
   const treemapOption = {
     tooltip: {
