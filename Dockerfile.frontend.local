@@ -1,0 +1,16 @@
+# Dockerfile pour frontend avec build local
+# Ce Dockerfile suppose que le frontend est déjà buildé localement
+# Usage: buildah bud -f Dockerfile.frontend.local -t dsa-frontend:latest .
+
+FROM nginx:alpine
+
+# Copier la configuration Nginx personnalisée
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copier les fichiers build depuis le build local (dist/)
+COPY dist /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+
