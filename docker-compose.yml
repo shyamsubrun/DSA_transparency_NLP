@@ -11,7 +11,7 @@ services:
     environment:
       # Utiliser host.docker.internal pour accéder à PostgreSQL sur l'hôte
       # Si cela ne fonctionne pas, utiliser l'IP de la VM (35.223.190.104)
-      - DATABASE_URL=postgresql://dsa_admin:Mohamed2025!@host.docker.internal:5432/dsa
+      - DATABASE_URL=postgresql://dsa_admin:Mohamed2025!@host.docker.internal:5432/dsa?connection_limit=20&pool_timeout=20
       - NODE_ENV=production
       - PORT=3001
       - FRONTEND_URL=http://35.223.190.104
