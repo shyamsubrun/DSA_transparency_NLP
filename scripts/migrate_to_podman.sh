@@ -66,33 +66,72 @@ podman stop dsa-backend dsa-frontend 2>/dev/null || true
 podman rm dsa-backend dsa-frontend 2>/dev/null || true
 echo -e "${GREEN}✅ Containers nettoyés${NC}"
 
-# 6. Build des images avec Buildah
+# 6. Build local des applications (hors container pour éviter les timeouts)
 echo ""
-echo "5️⃣  Build des images avec Buildah..."
+echo "5️⃣  Build local des applications..."
+echo ""
+
+# Backend
+echo "Building backend localement..."
+cd backend
+if [ ! -d "node_modules" ]; then
+    echo "Installation des dépendances backend..."
+    npm install --fetch-timeout=600000 --fetch-retries=10
+fi
+echo "Génération Prisma Client..."
+npx prisma generate
+echo "Build TypeScript..."
+npm run build
+if [ ! -d "dist" ]; then
+    echo -e "${RED}❌ Erreur: dist/ non trouvé après le build backend${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✅ Backend buildé localement${NC}"
+cd ..
+
+# Frontend
+echo ""
+echo "Building frontend localement..."
+if [ ! -d "node_modules" ]; then
+    echo "Installation des dépendances frontend..."
+    npm install --fetch-timeout=600000 --fetch-retries=10
+fi
+export VITE_API_BASE_URL=/api
+echo "Build frontend..."
+npm run build
+if [ ! -d "dist" ]; then
+    echo -e "${RED}❌ Erreur: dist/ non trouvé après le build frontend${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✅ Frontend buildé localement${NC}"
+
+# 7. Build des images avec Buildah (utilisant les builds locaux)
+echo ""
+echo "6️⃣  Build des images avec Buildah (utilisant les builds locaux)..."
 echo ""
 
 # Backend
 echo "Building backend image..."
-if buildah bud -f Dockerfile.backend -t dsa-backend:latest .; then
+if buildah bud -f Dockerfile.backend.local -t dsa-backend:latest .; then
     echo -e "${GREEN}✅ Image backend buildée${NC}"
 else
-    echo -e "${RED}❌ Erreur lors du build backend${NC}"
+    echo -e "${RED}❌ Erreur lors du build de l'image backend${NC}"
     exit 1
 fi
 
 # Frontend
 echo ""
 echo "Building frontend image..."
-if buildah bud -f Dockerfile.frontend --build-arg VITE_API_BASE_URL=/api -t dsa-frontend:latest .; then
+if buildah bud -f Dockerfile.frontend.local -t dsa-frontend:latest .; then
     echo -e "${GREEN}✅ Image frontend buildée${NC}"
 else
-    echo -e "${RED}❌ Erreur lors du build frontend${NC}"
+    echo -e "${RED}❌ Erreur lors du build de l'image frontend${NC}"
     exit 1
 fi
 
-# 7. Démarrer les containers
+# 8. Démarrer les containers
 echo ""
-echo "6️⃣  Démarrage des containers..."
+echo "7️⃣  Démarrage des containers..."
 
 # Backend avec connexion à PostgreSQL sur l'hôte
 echo "Démarrage du backend..."
@@ -143,12 +182,12 @@ else
     exit 1
 fi
 
-# 8. Attendre le démarrage
+# 9. Attendre le démarrage
 echo ""
 echo "⏳ Attente du démarrage (15 secondes)..."
 sleep 15
 
-# 9. Vérification
+# 10. Vérification
 echo ""
 echo "🔍 Vérification..."
 echo ""
