@@ -2,7 +2,7 @@
 # Ce Dockerfile suppose que le backend est déjà buildé localement
 # Usage: buildah bud -f Dockerfile.backend.local -t dsa-backend:latest .
 
-FROM node:20-alpine
+FROM docker.io/library/node:20-alpine
 
 WORKDIR /app
 
