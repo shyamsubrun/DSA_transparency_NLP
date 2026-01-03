@@ -14,9 +14,11 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-# 1. Arrêter les services actuels
+# 1. Arrêter les services actuels et nettoyer l'installation directe
 echo ""
-echo "1️⃣  Arrêt des services actuels..."
+echo "1️⃣  Arrêt des services et nettoyage de l'installation directe..."
+
+# Arrêter le service systemd backend
 if systemctl is-active --quiet dsa-backend.service; then
     echo "Arrêt du service systemd backend..."
     sudo systemctl stop dsa-backend.service
@@ -24,6 +26,38 @@ if systemctl is-active --quiet dsa-backend.service; then
     echo -e "${GREEN}✅ Service backend arrêté${NC}"
 else
     echo -e "${YELLOW}⚠️  Service backend déjà arrêté${NC}"
+fi
+
+# Arrêter Nginx (le frontend Podman le remplacera)
+echo ""
+echo "Arrêt de Nginx (sera remplacé par le container frontend)..."
+if systemctl is-active --quiet nginx; then
+    sudo systemctl stop nginx
+    echo -e "${GREEN}✅ Nginx arrêté${NC}"
+else
+    echo -e "${YELLOW}⚠️  Nginx déjà arrêté${NC}"
+fi
+
+# Désactiver la configuration Nginx de l'installation directe
+echo ""
+echo "Désactivation de la configuration Nginx directe..."
+if [ -f /etc/nginx/sites-enabled/dsa-dashboard ]; then
+    sudo rm -f /etc/nginx/sites-enabled/dsa-dashboard
+    echo -e "${GREEN}✅ Configuration Nginx directe désactivée${NC}"
+else
+    echo -e "${YELLOW}⚠️  Configuration Nginx directe déjà désactivée${NC}"
+fi
+
+# Supprimer les fichiers buildés de l'installation directe
+echo ""
+echo "Suppression des fichiers buildés de l'installation directe..."
+if [ -d /var/www/dsa-dashboard ]; then
+    sudo rm -rf /var/www/dsa-dashboard
+    echo -e "${GREEN}✅ Fichiers /var/www/dsa-dashboard supprimés${NC}"
+fi
+if [ -d ~/dsa-dashboard/dist ]; then
+    rm -rf ~/dsa-dashboard/dist
+    echo -e "${GREEN}✅ Fichiers dist/ locaux supprimés (seront recréés pour le build)${NC}"
 fi
 
 # 2. Installer Podman/Buildah si nécessaire
