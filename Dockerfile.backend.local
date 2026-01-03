@@ -6,14 +6,22 @@ FROM docker.io/library/node:20-alpine
 
 WORKDIR /app
 
-# Copier les node_modules déjà installés localement (inclut Prisma Client généré)
-COPY backend/node_modules ./node_modules
+# Installer les dépendances système nécessaires pour Prisma
+RUN apk add --no-cache openssl libc6-compat
+
+# Copier les fichiers de dépendances
+COPY backend/package*.json ./
+COPY backend/prisma ./prisma/
+
+# Installer seulement les dépendances de production
+RUN npm ci --only=production --fetch-timeout=600000 --fetch-retries=10 || \
+    npm install --only=production --fetch-timeout=600000 --fetch-retries=10
+
+# Générer Prisma Client pour Alpine (musl)
+RUN npx prisma generate
 
 # Copier le code compilé depuis le build local
 COPY backend/dist ./dist
-
-# Copier les fichiers nécessaires pour Prisma (schema et migrations)
-COPY backend/prisma ./prisma/
 
 # Variables d'environnement par défaut
 ENV NODE_ENV=production
