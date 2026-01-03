@@ -198,10 +198,24 @@ echo ""
 echo "7️⃣.5  Copie des images vers le contexte root..."
 buildah push localhost/dsa-backend:latest oci-archive:/tmp/dsa-backend.tar
 buildah push localhost/dsa-frontend:latest oci-archive:/tmp/dsa-frontend.tar
-sudo podman load -i /tmp/dsa-backend.tar
-sudo podman load -i /tmp/dsa-frontend.tar
+
+# Charger les images et capturer les IDs pour les tagger
+BACKEND_LOAD_OUTPUT=$(sudo podman load -i /tmp/dsa-backend.tar)
+BACKEND_IMAGE_ID=$(echo "$BACKEND_LOAD_OUTPUT" | grep "Loaded image:" | sed 's/.*Loaded image: //' | head -1)
+if [ -n "$BACKEND_IMAGE_ID" ]; then
+    sudo podman tag $BACKEND_IMAGE_ID localhost/dsa-backend:latest
+    echo "Backend image taggée: $BACKEND_IMAGE_ID -> localhost/dsa-backend:latest"
+fi
+
+FRONTEND_LOAD_OUTPUT=$(sudo podman load -i /tmp/dsa-frontend.tar)
+FRONTEND_IMAGE_ID=$(echo "$FRONTEND_LOAD_OUTPUT" | grep "Loaded image:" | sed 's/.*Loaded image: //' | head -1)
+if [ -n "$FRONTEND_IMAGE_ID" ]; then
+    sudo podman tag $FRONTEND_IMAGE_ID localhost/dsa-frontend:latest
+    echo "Frontend image taggée: $FRONTEND_IMAGE_ID -> localhost/dsa-frontend:latest"
+fi
+
 rm /tmp/dsa-backend.tar /tmp/dsa-frontend.tar
-echo -e "${GREEN}✅ Images copiées vers le contexte root${NC}"
+echo -e "${GREEN}✅ Images copiées et taggées vers le contexte root${NC}"
 
 # 8. Démarrer les containers
 echo ""
