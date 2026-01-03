@@ -113,12 +113,11 @@ echo ""
 # Sauvegarder et modifier temporairement .dockerignore pour permettre node_modules et dist
 if [ -f .dockerignore ]; then
     cp .dockerignore .dockerignore.backup
-    # Créer un .dockerignore qui n'exclut pas backend/node_modules et backend/dist
+    # Créer un .dockerignore qui n'exclut pas backend/node_modules, backend/dist et dist/ (frontend)
     cat > .dockerignore << 'EOF'
 # Node modules (mais pas backend/node_modules pour les builds locaux)
 node_modules
-# Build artifacts (mais pas backend/dist pour les builds locaux)
-dist
+# Build artifacts - on garde dist/ et backend/dist/ pour les builds locaux
 build
 
 # Logs
