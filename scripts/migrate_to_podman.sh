@@ -49,21 +49,24 @@ cd ~/dsa-dashboard || {
     exit 1
 }
 
-# 4. Créer le réseau Podman
+# 4. Créer le réseau Podman (avec sudo pour être accessible par les containers root)
 echo ""
 echo "3️⃣  Création du réseau Podman..."
-if podman network exists dsa-network; then
+if sudo podman network exists dsa-network 2>/dev/null; then
     echo -e "${YELLOW}⚠️  Réseau dsa-network existe déjà${NC}"
 else
-    podman network create dsa-network
+    sudo podman network create dsa-network
     echo -e "${GREEN}✅ Réseau dsa-network créé${NC}"
 fi
 
 # 5. Arrêter et supprimer les containers existants s'ils existent
 echo ""
 echo "4️⃣  Nettoyage des containers existants..."
+# Nettoyer les containers rootless et root
 podman stop dsa-backend dsa-frontend 2>/dev/null || true
 podman rm dsa-backend dsa-frontend 2>/dev/null || true
+sudo podman stop dsa-backend dsa-frontend 2>/dev/null || true
+sudo podman rm dsa-backend dsa-frontend 2>/dev/null || true
 echo -e "${GREEN}✅ Containers nettoyés${NC}"
 
 # 6. Build local des applications (hors container pour éviter les timeouts)
@@ -195,8 +198,21 @@ echo ""
 echo "7️⃣  Démarrage des containers..."
 
 # Backend avec connexion à PostgreSQL sur l'hôte
+# Utilise sudo podman pour être dans le même réseau que le frontend
 echo "Démarrage du backend..."
-podman run -d \
+
+# Arrêter et supprimer le container existant s'il existe
+sudo podman stop dsa-backend 2>/dev/null || true
+sudo podman rm dsa-backend 2>/dev/null || true
+
+# Vérifier si le réseau existe pour sudo podman
+if ! sudo podman network exists dsa-network 2>/dev/null; then
+    echo "Création du réseau dsa-network pour sudo podman..."
+    sudo podman network create dsa-network
+fi
+
+# Démarrer avec sudo podman
+if sudo podman run -d \
   --name dsa-backend \
   --network dsa-network \
   -p 3001:3001 \
@@ -206,15 +222,12 @@ podman run -d \
   -e FRONTEND_URL="http://35.223.190.104" \
   --add-host=host.containers.internal:host-gateway \
   --restart unless-stopped \
-  dsa-backend:latest
-
-if [ $? -eq 0 ]; then
+  dsa-backend:latest; then
     echo -e "${GREEN}✅ Container backend démarré${NC}"
 else
-    echo -e "${RED}❌ Erreur lors du démarrage du backend${NC}"
-    echo "Tentative avec l'IP de la VM..."
-    podman rm dsa-backend 2>/dev/null || true
-    podman run -d \
+    echo -e "${YELLOW}⚠️  Tentative avec l'IP de la VM...${NC}"
+    sudo podman rm dsa-backend 2>/dev/null || true
+    if sudo podman run -d \
       --name dsa-backend \
       --network dsa-network \
       -p 3001:3001 \
@@ -223,20 +236,28 @@ else
       -e PORT=3001 \
       -e FRONTEND_URL="http://35.223.190.104" \
       --restart unless-stopped \
-      dsa-backend:latest
+      dsa-backend:latest; then
+        echo -e "${GREEN}✅ Container backend démarré avec IP directe${NC}"
+    else
+        echo -e "${RED}❌ Erreur lors du démarrage du backend${NC}"
+        exit 1
+    fi
 fi
 
-# Frontend
+# Frontend (utilise sudo pour le port 80 privilégié)
 echo ""
 echo "Démarrage du frontend..."
-podman run -d \
+# Arrêter et supprimer le container existant s'il existe
+sudo podman stop dsa-frontend 2>/dev/null || true
+sudo podman rm dsa-frontend 2>/dev/null || true
+
+# Démarrer avec sudo pour avoir accès au port 80
+if sudo podman run -d \
   --name dsa-frontend \
   --network dsa-network \
   -p 80:80 \
   --restart unless-stopped \
-  dsa-frontend:latest
-
-if [ $? -eq 0 ]; then
+  dsa-frontend:latest; then
     echo -e "${GREEN}✅ Container frontend démarré${NC}"
 else
     echo -e "${RED}❌ Erreur lors du démarrage du frontend${NC}"
@@ -254,7 +275,7 @@ echo "🔍 Vérification..."
 echo ""
 
 echo "Containers en cours d'exécution:"
-podman ps --filter "name=dsa-"
+sudo podman ps --filter "name=dsa-"
 
 echo ""
 echo "Test backend (direct):"
@@ -264,7 +285,7 @@ if [ -n "$BACKEND_HEALTH" ]; then
 else
     echo -e "${YELLOW}⚠️  Backend non accessible directement, vérifiez les logs${NC}"
     echo "Logs backend:"
-    podman logs --tail 20 dsa-backend
+    sudo podman logs --tail 20 dsa-backend
 fi
 
 echo ""
@@ -275,7 +296,7 @@ if [ -n "$FRONTEND_STATUS" ]; then
 else
     echo -e "${YELLOW}⚠️  Frontend non accessible, vérifiez les logs${NC}"
     echo "Logs frontend:"
-    podman logs --tail 20 dsa-frontend
+    sudo podman logs --tail 20 dsa-frontend
 fi
 
 echo ""
@@ -283,12 +304,12 @@ echo "=============================================="
 echo -e "${GREEN}✅ Migration terminée!${NC}"
 echo ""
 echo "📋 Commandes utiles:"
-echo "  - Logs backend: podman logs -f dsa-backend"
-echo "  - Logs frontend: podman logs -f dsa-frontend"
-echo "  - Arrêter: podman stop dsa-backend dsa-frontend"
-echo "  - Redémarrer: podman start dsa-backend dsa-frontend"
-echo "  - Statut: podman ps"
-echo "  - Voir tous les containers: podman ps -a"
+echo "  - Logs backend: sudo podman logs -f dsa-backend"
+echo "  - Logs frontend: sudo podman logs -f dsa-frontend"
+echo "  - Arrêter: sudo podman stop dsa-backend dsa-frontend"
+echo "  - Redémarrer: sudo podman start dsa-backend dsa-frontend"
+echo "  - Statut: sudo podman ps"
+echo "  - Voir tous les containers: sudo podman ps -a"
 echo ""
 echo "🌐 Accès:"
 echo "  - Frontend: http://35.223.190.104"
