@@ -110,12 +110,64 @@ echo ""
 echo "6️⃣  Build des images avec Buildah (utilisant les builds locaux)..."
 echo ""
 
+# Sauvegarder et modifier temporairement .dockerignore pour permettre node_modules et dist
+if [ -f .dockerignore ]; then
+    cp .dockerignore .dockerignore.backup
+    # Créer un .dockerignore qui n'exclut pas backend/node_modules et backend/dist
+    cat > .dockerignore << 'EOF'
+# Node modules (mais pas backend/node_modules pour les builds locaux)
+node_modules
+# Build artifacts (mais pas backend/dist pour les builds locaux)
+dist
+build
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env.local
+backend/.env
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Tests
+coverage
+
+# Documentation
+*.md
+!README.md
+
+# Database files
+database/
+scripts/
+
+# Source data
+src/data/dsa-download/
+
+# Cursor
+.cursor/
+EOF
+fi
+
 # Backend
 echo "Building backend image..."
 if buildah bud -f Dockerfile.backend.local -t dsa-backend:latest .; then
     echo -e "${GREEN}✅ Image backend buildée${NC}"
 else
     echo -e "${RED}❌ Erreur lors du build de l'image backend${NC}"
+    # Restaurer .dockerignore
+    if [ -f .dockerignore.backup ]; then
+        mv .dockerignore.backup .dockerignore
+    fi
     exit 1
 fi
 
@@ -126,7 +178,17 @@ if buildah bud -f Dockerfile.frontend.local -t dsa-frontend:latest .; then
     echo -e "${GREEN}✅ Image frontend buildée${NC}"
 else
     echo -e "${RED}❌ Erreur lors du build de l'image frontend${NC}"
+    # Restaurer .dockerignore
+    if [ -f .dockerignore.backup ]; then
+        mv .dockerignore.backup .dockerignore
+    fi
     exit 1
+fi
+
+# Restaurer .dockerignore
+if [ -f .dockerignore.backup ]; then
+    mv .dockerignore.backup .dockerignore
+    echo -e "${GREEN}✅ .dockerignore restauré${NC}"
 fi
 
 # 8. Démarrer les containers
