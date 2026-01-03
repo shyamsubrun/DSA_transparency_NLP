@@ -193,6 +193,16 @@ if [ -f .dockerignore.backup ]; then
     echo -e "${GREEN}✅ .dockerignore restauré${NC}"
 fi
 
+# 7.5. Copier les images vers le contexte root pour sudo podman
+echo ""
+echo "7️⃣.5  Copie des images vers le contexte root..."
+buildah push localhost/dsa-backend:latest oci-archive:/tmp/dsa-backend.tar
+buildah push localhost/dsa-frontend:latest oci-archive:/tmp/dsa-frontend.tar
+sudo podman load -i /tmp/dsa-backend.tar
+sudo podman load -i /tmp/dsa-frontend.tar
+rm /tmp/dsa-backend.tar /tmp/dsa-frontend.tar
+echo -e "${GREEN}✅ Images copiées vers le contexte root${NC}"
+
 # 8. Démarrer les containers
 echo ""
 echo "7️⃣  Démarrage des containers..."
@@ -222,7 +232,7 @@ if sudo podman run -d \
   -e FRONTEND_URL="http://35.223.190.104" \
   --add-host=host.containers.internal:host-gateway \
   --restart unless-stopped \
-  dsa-backend:latest; then
+  localhost/dsa-backend:latest; then
     echo -e "${GREEN}✅ Container backend démarré${NC}"
 else
     echo -e "${YELLOW}⚠️  Tentative avec l'IP de la VM...${NC}"
@@ -236,7 +246,7 @@ else
       -e PORT=3001 \
       -e FRONTEND_URL="http://35.223.190.104" \
       --restart unless-stopped \
-      dsa-backend:latest; then
+      localhost/dsa-backend:latest; then
         echo -e "${GREEN}✅ Container backend démarré avec IP directe${NC}"
     else
         echo -e "${RED}❌ Erreur lors du démarrage du backend${NC}"
@@ -257,7 +267,7 @@ if sudo podman run -d \
   --network dsa-network \
   -p 80:80 \
   --restart unless-stopped \
-  dsa-frontend:latest; then
+  localhost/dsa-frontend:latest; then
     echo -e "${GREEN}✅ Container frontend démarré${NC}"
 else
     echo -e "${RED}❌ Erreur lors du démarrage du frontend${NC}"
