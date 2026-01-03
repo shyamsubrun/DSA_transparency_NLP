@@ -6,19 +6,14 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copier les fichiers de dépendances
-COPY backend/package*.json ./
-COPY backend/prisma ./prisma/
-
-# Installer seulement les dépendances de production (sans devDependencies)
-RUN npm ci --only=production --fetch-timeout=600000 --fetch-retries=10 || \
-    npm install --only=production --fetch-timeout=600000 --fetch-retries=10
-
-# Générer Prisma Client
-RUN npx prisma generate
+# Copier les node_modules déjà installés localement (inclut Prisma Client généré)
+COPY backend/node_modules ./node_modules
 
 # Copier le code compilé depuis le build local
 COPY backend/dist ./dist
+
+# Copier les fichiers nécessaires pour Prisma (schema et migrations)
+COPY backend/prisma ./prisma/
 
 # Variables d'environnement par défaut
 ENV NODE_ENV=production
