@@ -48,6 +48,15 @@ FROM pg_proc
 WHERE proname = 'sync_dsa_decision_to_moderation_entry';
 " 2>/dev/null
 
+echo ""
+echo "📊 Définition de la fonction (premiers 500 caractères)"
+echo "----------------------------------------"
+PGPASSWORD="${PGPASSWORD:-Mohamed2025!}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "
+SELECT LEFT(pg_get_functiondef(oid), 500) as function_preview
+FROM pg_proc
+WHERE proname = 'sync_dsa_decision_to_moderation_entry';
+" 2>/dev/null
+
 # 3. Vérifier les triggers
 run_query "
 SELECT 
@@ -60,30 +69,54 @@ WHERE c.relname = 'dsa_decisions'
   AND t.tgisinternal = false;
 " "Statut des triggers sur dsa_decisions"
 
-# 4. Compter les données non synchronisées
+# 4. Vérifier la colonne de jointure (uuid dans dsa_decisions, id dans moderation_entries)
+echo ""
+echo "📊 Vérification de la colonne de jointure"
+echo "----------------------------------------"
+PGPASSWORD="${PGPASSWORD:-Mohamed2025!}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c "
+SELECT 
+    column_name,
+    data_type
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'dsa_decisions'
+  AND column_name IN ('uuid', 'id')
+ORDER BY column_name;
+" 2>/dev/null
+
+# 5. Compter les données non synchronisées (en utilisant uuid)
 run_query "
 SELECT 
     COUNT(*) as unsynced_count,
-    ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM dsa_decisions), 2) as percentage_unsynced
+    ROUND(COUNT(*) * 100.0 / NULLIF((SELECT COUNT(*) FROM dsa_decisions), 0), 2) as percentage_unsynced
 FROM dsa_decisions dd
-LEFT JOIN moderation_entries me ON dd.id = me.id
+LEFT JOIN moderation_entries me ON dd.uuid::text = me.id
 WHERE me.id IS NULL;
-" "Données non synchronisées"
+" "Données dans dsa_decisions non synchronisées vers moderation_entries"
 
-# 5. Échantillon de données non synchronisées
+# 6. Compter les données dans moderation_entries qui ne sont pas dans dsa_decisions
 run_query "
 SELECT 
-    dd.id,
-    dd.application_date,
-    dd.created_at
-FROM dsa_decisions dd
-LEFT JOIN moderation_entries me ON dd.id = me.id
-WHERE me.id IS NULL
-ORDER BY dd.created_at DESC
-LIMIT 5;
-" "Échantillon de données non synchronisées (5 premières)"
+    COUNT(*) as extra_count
+FROM moderation_entries me
+LEFT JOIN dsa_decisions dd ON me.id = dd.uuid::text
+WHERE dd.uuid IS NULL;
+" "Données dans moderation_entries qui ne sont pas dans dsa_decisions"
 
-# 6. Dates de dernière modification
+# 7. Échantillon de données non synchronisées
+run_query "
+SELECT 
+    dd.uuid::text as uuid,
+    dd.application_date,
+    dd.platform_name
+FROM dsa_decisions dd
+LEFT JOIN moderation_entries me ON dd.uuid::text = me.id
+WHERE me.id IS NULL
+ORDER BY dd.application_date DESC
+LIMIT 5;
+" "Échantillon de données dans dsa_decisions non synchronisées (5 premières)"
+
+# 8. Dates de dernière modification
 run_query "
 SELECT 
     'dsa_decisions' as table_name,
@@ -96,7 +129,7 @@ SELECT
 FROM moderation_entries;
 " "Dates de dernière modification"
 
-# 7. Vérifier la structure de dsa_decisions
+# 9. Vérifier la structure de dsa_decisions
 echo ""
 echo "📊 Structure de dsa_decisions (premières colonnes)"
 echo "----------------------------------------"
