@@ -1,5 +1,16 @@
-// Data Service - API calls to backend
+// Data Service - Mock Data Mode (no backend API calls)
+// 
+// This service can work in two modes:
+// 1. Mock Data Mode (USE_MOCK_DATA = true): Uses generated mock data, no backend required
+// 2. API Mode (USE_MOCK_DATA = false): Fetches data from the backend API
+//
+// To switch modes, change the USE_MOCK_DATA constant below.
+//
 import type { ModerationEntry } from './types';
+import { fetchMockModerationData, fetchMockStats, getMockFilterOptions } from './mockData';
+
+// Set to true to use mock data, false to use real API
+const USE_MOCK_DATA = true;
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
@@ -52,6 +63,12 @@ export async function fetchModerationData(
   page = 1,
   limit = 1000
 ): Promise<FetchEntriesResponse> {
+  // Use mock data if enabled
+  if (USE_MOCK_DATA) {
+    return fetchMockModerationData(filters, page, limit);
+  }
+
+  // Real API call
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit)
@@ -106,6 +123,16 @@ export async function fetchModerationData(
  * Fetch filter options
  */
 export async function fetchFilterOptions(): Promise<FilterOptions> {
+  // Use mock data if enabled
+  if (USE_MOCK_DATA) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(getMockFilterOptions());
+      }, 100); // Small delay to simulate API call
+    });
+  }
+
+  // Real API call
   const response = await fetch(`${API_BASE_URL}/filters`);
   if (!response.ok) {
     throw new Error(`Failed to fetch filter options: ${response.statusText}`);
@@ -118,6 +145,12 @@ export async function fetchFilterOptions(): Promise<FilterOptions> {
  * Fetch KPI statistics
  */
 export async function fetchStats(filters?: Filters): Promise<KPIStats> {
+  // Use mock data if enabled
+  if (USE_MOCK_DATA) {
+    return fetchMockStats(filters);
+  }
+
+  // Real API call
   const params = new URLSearchParams();
 
   if (filters?.dateRange) {
