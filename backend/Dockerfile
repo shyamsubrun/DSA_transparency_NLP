@@ -7,18 +7,18 @@ RUN npm config set fetch-timeout 600000 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000
 
-WORKDIR /app/backend
+WORKDIR /app
 
 # Copier les fichiers de dépendances
-COPY backend/package*.json ./
-COPY backend/prisma ./prisma/
+COPY package*.json ./
+COPY prisma ./prisma/
 
 # Installer les dépendances
 RUN npm ci
 
 # Copier le code source
-COPY backend/src ./src
-COPY backend/tsconfig.json ./
+COPY src ./src
+COPY tsconfig.json ./
 
 # Générer Prisma Client
 RUN npx prisma generate
@@ -38,15 +38,15 @@ RUN npm config set fetch-timeout 600000 && \
 WORKDIR /app
 
 # Installer seulement les dépendances de production
-COPY backend/package*.json ./
+COPY package*.json ./
 RUN npm ci --only=production
 
 # Copier Prisma schema et générer client
-COPY backend/prisma ./prisma
+COPY prisma ./prisma
 RUN npx prisma generate
 
 # Copier le code compilé depuis le stage builder
-COPY --from=builder /app/backend/dist ./dist
+COPY --from=builder /app/dist ./dist
 
 # Variables d'environnement par défaut
 ENV NODE_ENV=production
@@ -59,4 +59,3 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 CMD ["node", "dist/index.js"]
-

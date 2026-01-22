@@ -1,11 +1,13 @@
-# Node modules
+# Node modules (seront installés dans les containers)
 node_modules
 backend/node_modules
+frontend/node_modules
 
-# Build artifacts
+# Build artifacts (seront générés dans les containers)
 dist
 build
 backend/dist
+frontend/dist
 
 # Logs
 *.log
@@ -13,7 +15,9 @@ npm-debug.log*
 
 # Environment files (seront passés via docker-compose)
 .env.local
+.env
 backend/.env
+frontend/.env
 
 # Git
 .git
@@ -36,9 +40,17 @@ coverage
 database/
 scripts/
 
-# Source data
+# Source data (fichiers volumineux)
 src/data/dsa-download/
+frontend/src/data/dsa-download/
+**/dsa-download/
+**/*.zip
+**/*.csv
+**/sor-global-*/
 
 # Cursor
 .cursor/
 
+# Fichiers temporaires
+*.tmp
+*.bak

@@ -1,20 +1,18 @@
-version: '3.8'
-
 services:
   backend:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: dsa-backend
     ports:
       - "3001:3001"
     environment:
-      # Utiliser host.docker.internal pour accéder à PostgreSQL sur l'hôte
-      # Si cela ne fonctionne pas, utiliser l'IP de la VM (35.223.190.104)
+      # Utiliser le nom du service PostgreSQL si vous avez un container PostgreSQL
+      # Sinon, utiliser host.docker.internal pour accéder à PostgreSQL sur l'hôte
       - DATABASE_URL=postgresql://dsa_admin:Mohamed2025!@host.docker.internal:5432/dsa?connection_limit=20&pool_timeout=20
       - NODE_ENV=production
       - PORT=3001
-      - FRONTEND_URL=http://35.223.190.104
+      - FRONTEND_URL=http://localhost
     networks:
       - dsa-network
     restart: unless-stopped
@@ -27,8 +25,8 @@ services:
 
   frontend:
     build:
-      context: .
-      dockerfile: Dockerfile.frontend
+      context: ./frontend
+      dockerfile: Dockerfile
       args:
         - VITE_API_BASE_URL=/api
     container_name: dsa-frontend
@@ -44,4 +42,3 @@ services:
 networks:
   dsa-network:
     driver: bridge
-

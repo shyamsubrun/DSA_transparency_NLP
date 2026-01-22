@@ -1,41 +1,53 @@
-# Scripts de Déploiement
+# Scripts Utiles
 
-Ce dossier contient les scripts nécessaires pour déployer le dashboard DSA sur la VM.
+Ce dossier contient les scripts pour la gestion de la base de données et la vérification du déploiement.
 
-## Scripts disponibles
+## Scripts de Base de Données
 
-### `setup_vm.sh`
-
-Script d'installation des outils nécessaires sur la VM (Buildah, Podman, podman-compose).
-
-**Usage :**
-```bash
-bash scripts/setup_vm.sh
-```
-
-**Fonctions :**
-- Installe Buildah, Podman et podman-compose
-- Vérifie les versions installées
-- Configure Podman pour l'utilisateur
-
-### `deploy_podman.sh`
-
-Script de déploiement avec Podman. Build les images et démarre les containers.
+### `check_database.sh`
+Vérifie les données dans la base de données PostgreSQL.
 
 **Usage :**
 ```bash
-bash scripts/deploy_podman.sh
+bash scripts/check_database.sh
 ```
 
-**Fonctions :**
-- Build les images backend et frontend avec Buildah
-- Crée le réseau Podman si nécessaire
-- Démarre les containers backend et frontend
-- Vérifie le statut des containers
+### `check_sync_status.sh`
+Vérifie le statut de synchronisation entre les tables.
+
+**Usage :**
+```bash
+bash scripts/check_sync_status.sh
+```
+
+### `verify_table_usage.sh`
+Vérifie l'utilisation des tables et des triggers.
+
+**Usage :**
+```bash
+bash scripts/verify_table_usage.sh
+```
+
+### `check_postgresql.sh`
+Vérifie la connexion PostgreSQL.
+
+**Usage :**
+```bash
+bash scripts/check_postgresql.sh
+```
+
+### `check_local_postgresql.sh`
+Vérifie la connexion PostgreSQL locale.
+
+**Usage :**
+```bash
+bash scripts/check_local_postgresql.sh
+```
+
+## Scripts de Vérification
 
 ### `check_deployment.sh`
-
-Script de vérification complète du déploiement.
+Vérifie le statut du déploiement Docker.
 
 **Usage :**
 ```bash
@@ -43,66 +55,78 @@ bash scripts/check_deployment.sh
 ```
 
 **Vérifications :**
-- Statut des containers (backend et frontend)
+- Statut des containers Docker
 - Santé du backend (health check)
 - Accès frontend
 - API via proxy Nginx
 - Logs récents
-- Connexion PostgreSQL
 
-### `dsa-dashboard.service`
+### `check_vm_status.sh`
+Vérifie le statut de la VM.
 
-Fichier de service systemd pour le démarrage automatique au boot.
-
-**Installation :**
+**Usage :**
 ```bash
-sudo cp scripts/dsa-dashboard.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable dsa-dashboard.service
-sudo systemctl start dsa-dashboard.service
+bash scripts/check_vm_status.sh
 ```
 
-## Utilisation sur la VM
+### `complete_check.sh`
+Vérification complète du système.
 
-### Première installation
-
-1. Cloner le repository :
-   ```bash
-   cd ~
-   git clone https://github.com/raouf-rak/dsa-dashboard.git
-   cd dsa-dashboard
-   ```
-
-2. Installer les outils :
-   ```bash
-   bash scripts/setup_vm.sh
-   ```
-
-3. Créer le fichier `.env.production` :
-   ```bash
-   cd backend
-   nano .env.production
-   # Ajouter les variables d'environnement
-   ```
-
-4. Déployer :
-   ```bash
-   cd ~/dsa-dashboard
-   bash scripts/deploy_podman.sh
-   ```
-
-5. Vérifier :
-   ```bash
-   bash scripts/check_deployment.sh
-   ```
-
-### Mise à jour
-
+**Usage :**
 ```bash
-cd ~/dsa-dashboard
-git pull origin main
-bash scripts/deploy_podman.sh
-bash scripts/check_deployment.sh
+bash scripts/complete_check.sh
+```
+
+## Scripts Python
+
+### `import_to_postgresql.py`
+Importe les données dans PostgreSQL.
+
+**Usage :**
+```bash
+python scripts/import_to_postgresql.py
+```
+
+### `migrate_dsa_decisions_to_moderation_entries.py`
+Migre les données DSA vers les entrées de modération.
+
+**Usage :**
+```bash
+python scripts/migrate_dsa_decisions_to_moderation_entries.py
+```
+
+### `transform_dsa_to_dashboard.py`
+Transforme les données DSA pour le dashboard.
+
+**Usage :**
+```bash
+python scripts/transform_dsa_to_dashboard.py
+```
+
+### `analyze_dsa_data.py`
+Analyse les données DSA.
+
+**Usage :**
+```bash
+python scripts/analyze_dsa_data.py
+```
+
+### `run_data_verification.py`
+Exécute la vérification des données.
+
+**Usage :**
+```bash
+python scripts/run_data_verification.py
+```
+
+## Scripts PowerShell (Windows)
+
+### `run_data_verification.ps1`
+Version PowerShell du script de vérification.
+
+**Usage :**
+```powershell
+.\scripts\run_data_verification.ps1
 ```
 
 ## Permissions
@@ -118,4 +142,3 @@ chmod +x scripts/*.sh
 - Les scripts utilisent `set -e` pour arrêter en cas d'erreur
 - Les scripts vérifient les prérequis avant d'exécuter
 - Les logs sont affichés pour faciliter le debugging
-

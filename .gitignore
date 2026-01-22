@@ -1,3 +1,27 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+package-lock.json
+backend/package-lock.json
+frontend/package-lock.json
+
+# Build outputs
+dist/
+build/
+backend/dist/
+frontend/dist/
+*.tsbuildinfo
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/.env.production
+frontend/.env
+frontend/.env.production
+
 # Logs
 logs
 *.log
@@ -7,51 +31,50 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Dependencies
-node_modules
-dist
-dist-ssr
-*.local
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-backend/.env
-backend/.env.production
-.env.production
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# OS
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.swp
+*.swo
+*~
 
-# Downloaded data files (should not be in repository)
-src/data/dsa-download/**/*.csv
-src/data/dsa-download/**/*.zip
-src/data/dsa-download/**/*.json
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-env/
-ENV/
+# Testing
+coverage/
+.nyc_output/
+*.lcov
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
 
-# Build outputs
-build/
-*.tsbuildinfo
+# Docker
+.dockerignore.backup
+
+# Cursor
+.cursor/
+
+# Database dumps
+*.sql.gz
+*.dump
+
+# Data files (fichiers locaux, non nécessaires sur la VM avec PostgreSQL)
+src/data/dsa-download/
+frontend/src/data/dsa-download/
+**/dsa-download/
+**/*.zip
+**/*.csv
+**/sor-global-*/

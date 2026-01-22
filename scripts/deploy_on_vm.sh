@@ -1,194 +1,96 @@
 #!/bin/bash
-# Script de déploiement complet sur la VM
-# À exécuter directement sur la VM après connexion SSH
+# Script pour déployer le dashboard sur la VM avec Docker
 # Usage: bash scripts/deploy_on_vm.sh
 
 set -e
 
-echo "🚀 Déploiement complet DSA Dashboard sur la VM"
-echo "=============================================="
+echo "=========================================="
+echo "Déploiement du Dashboard DSA avec Docker"
+echo "=========================================="
 
-# Couleurs
+# Couleurs pour les messages
+RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-RED='\033[0;31m'
-NC='\033[0m'
+NC='\033[0m' # No Color
 
-# Variables
-REPO_URL="https://github.com/raouf-rak/dsa-dashboard.git"
-PROJECT_DIR="$HOME/dsa-dashboard"
-DB_USER="dsa_admin"
-DB_PASS="Mohamed2025!"
-DB_HOST="localhost"
-DB_PORT="5432"
-DB_NAME="dsa"
-VM_IP="35.223.190.104"
+info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
 
+warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Vérifier que Docker est installé
+if ! command -v docker &> /dev/null; then
+    error "Docker n'est pas installé. Veuillez d'abord exécuter scripts/install_docker.sh"
+    exit 1
+fi
+
+# Vérifier que Docker Compose est disponible
+if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+    error "Docker Compose n'est pas installé"
+    exit 1
+fi
+
+# Aller dans le dossier du projet
+cd ~/dsa-dashboard || {
+    error "Le dossier ~/dsa-dashboard n'existe pas"
+    exit 1
+}
+
+info "Étape 1: Mise à jour du code depuis GitHub"
+git pull origin main || git pull origin master || warn "Impossible de faire git pull"
+
+info "Étape 2: Arrêt des containers existants"
+docker compose down 2>/dev/null || true
+
+info "Étape 3: Construction des images Docker"
+docker compose build
+
+info "Étape 4: Démarrage des services"
+docker compose up -d
+
+info "Étape 5: Attente du démarrage des services..."
+sleep 15
+
+info "Étape 6: Vérification du statut"
+docker compose ps
+
+info "Étape 7: Test de santé"
 echo ""
-echo "📋 Configuration:"
-echo "  Repository: $REPO_URL"
-echo "  Directory: $PROJECT_DIR"
-echo "  Database: $DB_USER@$DB_HOST:$DB_PORT/$DB_NAME"
-echo ""
-
-# Étape 1: Vérifier/Installer les outils
-echo "1️⃣  Installation des outils nécessaires..."
-if ! command -v buildah &> /dev/null || ! command -v podman &> /dev/null; then
-    echo -e "${YELLOW}Installation de Buildah et Podman...${NC}"
-    if [ -f /etc/redhat-release ]; then
-        sudo yum install -y buildah podman podman-compose
-    elif [ -f /etc/debian_version ]; then
-        sudo apt-get update
-        sudo apt-get install -y buildah podman podman-compose
-    else
-        echo -e "${RED}❌ Distribution non supportée. Installez manuellement buildah et podman.${NC}"
-        exit 1
-    fi
+info "Test du backend..."
+if curl -f http://localhost:3001/health > /dev/null 2>&1; then
+    info "✅ Backend est healthy"
 else
-    echo -e "${GREEN}✅ Buildah et Podman déjà installés${NC}"
+    warn "⚠️  Backend ne répond pas encore"
+    warn "Vérifiez les logs avec: docker compose logs backend"
 fi
 
-# Vérifier podman-compose
-if ! command -v podman-compose &> /dev/null; then
-    echo -e "${YELLOW}⚠️  podman-compose non trouvé. Installation via pip...${NC}"
-    pip3 install podman-compose || {
-        echo -e "${YELLOW}pip3 non disponible. Vous devrez utiliser podman directement.${NC}"
-    }
-fi
-
-# Étape 2: Cloner/Mettre à jour le repository
 echo ""
-echo "2️⃣  Clonage/Mise à jour du repository..."
-if [ -d "$PROJECT_DIR" ]; then
-    echo -e "${YELLOW}Le dossier existe déjà. Mise à jour...${NC}"
-    cd "$PROJECT_DIR"
-    git pull origin main || {
-        echo -e "${YELLOW}Erreur lors du pull. Tentative de reset...${NC}"
-        git fetch origin
-        git reset --hard origin/main
-    }
+info "Test du frontend..."
+if curl -f http://localhost/health > /dev/null 2>&1; then
+    info "✅ Frontend est accessible"
 else
-    echo "Clonage du repository..."
-    cd ~
-    git clone "$REPO_URL" "$PROJECT_DIR"
-    cd "$PROJECT_DIR"
-fi
-
-# Rendre les scripts exécutables
-chmod +x scripts/*.sh deploy.sh 2>/dev/null || true
-
-# Étape 3: Configurer le firewall
-echo ""
-echo "3️⃣  Configuration du firewall..."
-if command -v firewall-cmd &> /dev/null; then
-    if ! sudo firewall-cmd --list-ports | grep -q "80/tcp"; then
-        echo "Ouverture du port 80..."
-        sudo firewall-cmd --permanent --add-port=80/tcp
-        sudo firewall-cmd --reload
-        echo -e "${GREEN}✅ Port 80 ouvert${NC}"
-    else
-        echo -e "${GREEN}✅ Port 80 déjà ouvert${NC}"
-    fi
-elif command -v ufw &> /dev/null; then
-    if ! sudo ufw status | grep -q "80/tcp"; then
-        echo "Ouverture du port 80..."
-        sudo ufw allow 80/tcp
-        sudo ufw reload
-        echo -e "${GREEN}✅ Port 80 ouvert${NC}"
-    else
-        echo -e "${GREEN}✅ Port 80 déjà ouvert${NC}"
-    fi
-else
-    echo -e "${YELLOW}⚠️  Aucun firewall détecté. Assurez-vous que le port 80 est accessible.${NC}"
-fi
-
-# Étape 4: Créer le fichier .env.production
-echo ""
-echo "4️⃣  Configuration des variables d'environnement..."
-cd "$PROJECT_DIR/backend"
-if [ ! -f ".env.production" ]; then
-    echo "Création du fichier .env.production..."
-    cat > .env.production << EOF
-DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}
-NODE_ENV=production
-PORT=3001
-FRONTEND_URL=http://${VM_IP}
-EOF
-    echo -e "${GREEN}✅ Fichier .env.production créé${NC}"
-else
-    echo -e "${GREEN}✅ Fichier .env.production existe déjà${NC}"
-fi
-
-# Étape 5: Vérifier PostgreSQL
-echo ""
-echo "5️⃣  Vérification de PostgreSQL..."
-if command -v psql &> /dev/null; then
-    if PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" &> /dev/null; then
-        echo -e "${GREEN}✅ Connexion PostgreSQL OK${NC}"
-    else
-        echo -e "${RED}❌ Impossible de se connecter à PostgreSQL${NC}"
-        echo "Vérifiez que PostgreSQL est démarré et que les credentials sont corrects."
-    fi
-else
-    echo -e "${YELLOW}⚠️  psql non trouvé. Impossible de vérifier PostgreSQL.${NC}"
-fi
-
-# Étape 6: Arrêter les containers existants
-echo ""
-echo "6️⃣  Arrêt des containers existants (si présents)..."
-cd "$PROJECT_DIR"
-if command -v podman-compose &> /dev/null; then
-    podman-compose down 2>/dev/null || true
-else
-    podman stop dsa-backend dsa-frontend 2>/dev/null || true
-    podman rm dsa-backend dsa-frontend 2>/dev/null || true
-fi
-
-# Étape 7: Build et démarrage
-echo ""
-echo "7️⃣  Build et démarrage des containers..."
-if command -v podman-compose &> /dev/null; then
-    echo "Utilisation de podman-compose..."
-    podman-compose up -d --build
-else
-    echo "Utilisation de podman directement..."
-    bash scripts/deploy_podman.sh
-fi
-
-# Étape 8: Attendre le démarrage
-echo ""
-echo "8️⃣  Attente du démarrage des containers (20 secondes)..."
-sleep 20
-
-# Étape 9: Vérification
-echo ""
-echo "9️⃣  Vérification du déploiement..."
-if [ -f "scripts/check_deployment.sh" ]; then
-    bash scripts/check_deployment.sh
-else
-    echo "Vérification manuelle..."
-    echo ""
-    echo "Containers:"
-    podman ps --filter "name=dsa-"
-    echo ""
-    echo "Backend health:"
-    curl -s http://localhost:3001/health || echo "❌ Backend non accessible"
-    echo ""
-    echo "Frontend:"
-    curl -s -o /dev/null -w "HTTP %{http_code}\n" http://localhost/ || echo "❌ Frontend non accessible"
+    warn "⚠️  Frontend ne répond pas encore"
+    warn "Vérifiez les logs avec: docker compose logs frontend"
 fi
 
 echo ""
-echo "=============================================="
-echo -e "${GREEN}✅ Déploiement terminé!${NC}"
+echo "=========================================="
+info "Déploiement terminé !"
+echo "=========================================="
+info "Dashboard disponible sur:"
+info "  - Local: http://localhost"
+info "  - Réseau: http://$(hostname -I | awk '{print $1}')"
 echo ""
-echo "🌐 Accès:"
-echo "  - Frontend: http://${VM_IP}"
-echo "  - Backend health: http://${VM_IP}/api/health"
-echo ""
-echo "📋 Commandes utiles:"
-echo "  - Logs: podman-compose logs -f"
-echo "  - Statut: podman-compose ps"
-echo "  - Arrêter: podman-compose down"
-echo "  - Redémarrer: podman-compose restart"
-
+info "Commandes utiles:"
+echo "  - Voir les logs: docker compose logs -f"
+echo "  - Arrêter: docker compose down"
+echo "  - Redémarrer: docker compose restart"
+echo "  - Statut: docker compose ps"
