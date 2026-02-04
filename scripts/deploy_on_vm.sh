@@ -26,41 +26,70 @@ error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Détecter l'utilisateur réel (même si exécuté avec sudo)
+REAL_USER="${SUDO_USER:-$USER}"
+REAL_HOME=$(getent passwd "$REAL_USER" | cut -d: -f6)
+PROJECT_DIR="$REAL_HOME/dsa-dashboard"
+
 # Vérifier que Docker est installé
 if ! command -v docker &> /dev/null; then
     error "Docker n'est pas installé. Veuillez d'abord exécuter scripts/install_docker.sh"
     exit 1
 fi
 
-# Vérifier que Docker Compose est disponible
-if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+# Détecter si sudo est nécessaire pour Docker
+DOCKER_CMD="docker"
+if ! docker ps &> /dev/null 2>&1; then
+    if sudo docker ps &> /dev/null 2>&1; then
+        warn "Docker nécessite sudo. Utilisation de 'sudo docker'..."
+        DOCKER_CMD="sudo docker"
+        warn "Pour éviter sudo, exécutez: bash scripts/fix_docker_permissions.sh"
+    else
+        error "Impossible d'accéder à Docker. Vérifiez l'installation."
+        exit 1
+    fi
+fi
+
+# Vérifier que Docker Compose est disponible (avec la bonne commande)
+if command -v docker-compose &> /dev/null; then
+    COMPOSE_CMD="$DOCKER_CMD-compose"
+elif $DOCKER_CMD compose version &> /dev/null 2>&1; then
+    COMPOSE_CMD="$DOCKER_CMD compose"
+else
     error "Docker Compose n'est pas installé"
     exit 1
 fi
 
 # Aller dans le dossier du projet
-cd ~/dsa-dashboard || {
-    error "Le dossier ~/dsa-dashboard n'existe pas"
+if [ ! -d "$PROJECT_DIR" ]; then
+    error "Le dossier $PROJECT_DIR n'existe pas"
+    exit 1
+fi
+
+cd "$PROJECT_DIR" || {
+    error "Impossible d'accéder au dossier $PROJECT_DIR"
     exit 1
 }
+
+info "Répertoire du projet: $PROJECT_DIR"
 
 info "Étape 1: Mise à jour du code depuis GitHub"
 git pull origin main || git pull origin master || warn "Impossible de faire git pull"
 
 info "Étape 2: Arrêt des containers existants"
-docker compose down 2>/dev/null || true
+$COMPOSE_CMD down 2>/dev/null || true
 
 info "Étape 3: Construction des images Docker"
-docker compose build
+$COMPOSE_CMD build
 
 info "Étape 4: Démarrage des services"
-docker compose up -d
+$COMPOSE_CMD up -d
 
 info "Étape 5: Attente du démarrage des services..."
 sleep 15
 
 info "Étape 6: Vérification du statut"
-docker compose ps
+$COMPOSE_CMD ps
 
 info "Étape 7: Test de santé"
 echo ""
@@ -69,7 +98,7 @@ if curl -f http://localhost:3001/health > /dev/null 2>&1; then
     info "✅ Backend est healthy"
 else
     warn "⚠️  Backend ne répond pas encore"
-    warn "Vérifiez les logs avec: docker compose logs backend"
+    warn "Vérifiez les logs avec: $COMPOSE_CMD logs backend"
 fi
 
 echo ""
@@ -78,7 +107,7 @@ if curl -f http://localhost/health > /dev/null 2>&1; then
     info "✅ Frontend est accessible"
 else
     warn "⚠️  Frontend ne répond pas encore"
-    warn "Vérifiez les logs avec: docker compose logs frontend"
+    warn "Vérifiez les logs avec: $COMPOSE_CMD logs frontend"
 fi
 
 echo ""
@@ -90,7 +119,7 @@ info "  - Local: http://localhost"
 info "  - Réseau: http://$(hostname -I | awk '{print $1}')"
 echo ""
 info "Commandes utiles:"
-echo "  - Voir les logs: docker compose logs -f"
-echo "  - Arrêter: docker compose down"
-echo "  - Redémarrer: docker compose restart"
-echo "  - Statut: docker compose ps"
+echo "  - Voir les logs: $COMPOSE_CMD logs -f"
+echo "  - Arrêter: $COMPOSE_CMD down"
+echo "  - Redémarrer: $COMPOSE_CMD restart"
+echo "  - Statut: $COMPOSE_CMD ps"

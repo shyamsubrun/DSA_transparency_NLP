@@ -85,10 +85,39 @@ npm run dev
 
 Les Dockerfiles utilisent un build multi-stage pour optimiser la taille des images. Les images de production ne contiennent que les dépendances nécessaires.
 
+## Déploiement sur la VM
+
+Pour déployer sur la VM, consultez le [Guide de Déploiement sur la VM](VM_DEPLOYMENT_GUIDE.md).
+
+### Déploiement rapide
+
+```bash
+# Sur la VM
+cd ~/dsa-dashboard
+git pull origin main
+bash scripts/deploy_on_vm.sh
+```
+
+### Scripts disponibles
+
+- `scripts/deploy_on_vm.sh` : Déployer le dashboard avec Docker Compose
+- `scripts/migrate_to_docker.sh` : Migrer de Podman/Buildah vers Docker
+- `scripts/install_docker.sh` : Installer Docker et Docker Compose
+- `scripts/remove_podman.sh` : Supprimer Podman/Buildah
+- `scripts/fix_docker_permissions.sh` : Corriger les permissions Docker
+
 ## Scripts utiles
+
+### Local
 
 - `docker-compose up -d` : Démarrer en arrière-plan
 - `docker-compose logs -f backend` : Voir les logs du backend
 - `docker-compose logs -f frontend` : Voir les logs du frontend
 - `docker-compose restart backend` : Redémarrer le backend
 - `docker-compose down -v` : Arrêter et supprimer les volumes
+
+### Sur la VM
+
+- `docker compose ps` : Voir le statut des containers
+- `docker compose logs -f` : Voir tous les logs
+- `docker compose restart` : Redémarrer tous les services
