@@ -29,6 +29,8 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_API_BASE_URL=/api
+        # Local: mock data par défaut, VM: override via .env ou variable d'environnement
+        - VITE_USE_MOCK_DATA=${VITE_USE_MOCK_DATA:-true}
     container_name: dsa-frontend
     ports:
       - "80:80"

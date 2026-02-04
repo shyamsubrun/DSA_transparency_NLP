@@ -10,7 +10,7 @@ import type { ModerationEntry } from './types';
 import { fetchMockModerationData, fetchMockStats, getMockFilterOptions } from './mockData';
 
 // Set to true to use mock data, false to use real API
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = (import.meta.env.VITE_USE_MOCK_DATA ?? 'false') === 'true';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
