@@ -1,0 +1,31 @@
+name: Deploy to VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VM_HOST: ${{ secrets.VM_HOST }}
+      VM_USER: ${{ secrets.VM_USER }}
+      VM_PORT: ${{ secrets.VM_PORT || '22' }}
+      VM_DEPLOY_PATH: ${{ secrets.VM_DEPLOY_PATH || format('/home/{0}/dsa-dashboard', secrets.VM_USER) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.VM_HOST }}
+          username: ${{ env.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: ${{ env.VM_PORT }}
+          script_stop: true
+          script: |
+            set -e
+            cd "${VM_DEPLOY_PATH}"
+            bash scripts/deploy_on_vm.sh

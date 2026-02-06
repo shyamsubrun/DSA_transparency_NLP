@@ -90,6 +90,35 @@ docker compose ps  # ou sudo docker compose ps
 - **Backend** : http://35.223.190.104:3001/health
 - **Frontend** : http://35.223.190.104
 
+## CI/CD avec GitHub Actions
+
+Un workflow déploie automatiquement sur la VM à chaque push sur `main`.
+
+### Secrets requis (GitHub)
+
+Ajoutez ces secrets dans votre repository GitHub (Settings → Secrets and variables → Actions) :
+
+- `VM_HOST` : IP ou nom de domaine de la VM (ex: `35.223.190.104`)
+- `VM_USER` : utilisateur SSH (ex: `raouf.abdallah`)
+- `VM_SSH_KEY` : clé privée SSH **au format OpenSSH**, en multi‑ligne
+- `VM_PORT` : port SSH (optionnel, par défaut `22`)
+- `VM_DEPLOY_PATH` : chemin du projet (optionnel, par défaut `/home/<user>/dsa-dashboard`)
+
+### Format de la clé privée
+
+La valeur de `VM_SSH_KEY` doit ressembler à :
+
+```
+-----BEGIN OPENSSH PRIVATE KEY-----
+...
+-----END OPENSSH PRIVATE KEY-----
+```
+
+### Fonctionnement
+
+Le workflow appelle `bash scripts/deploy_on_vm.sh` sur la VM, qui exécute :
+`git pull` → `docker compose down` → `docker compose build` → `docker compose up -d`.
+
 ## Commandes utiles
 
 ### Voir les logs
