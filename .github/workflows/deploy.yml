@@ -24,8 +24,18 @@ jobs:
           username: ${{ env.VM_USER }}
           key: ${{ secrets.VM_SSH_KEY }}
           port: ${{ env.VM_PORT }}
+          envs: VM_DEPLOY_PATH
           script_stop: true
           script: |
             set -e
+            echo "VM_DEPLOY_PATH=${VM_DEPLOY_PATH}"
+            if [ ! -d "${VM_DEPLOY_PATH}" ]; then
+              echo "Deploy path not found: ${VM_DEPLOY_PATH}"
+              exit 1
+            fi
+            if [ ! -f "${VM_DEPLOY_PATH}/scripts/deploy_on_vm.sh" ]; then
+              echo "Missing deploy script at: ${VM_DEPLOY_PATH}/scripts/deploy_on_vm.sh"
+              exit 1
+            fi
             cd "${VM_DEPLOY_PATH}"
-            bash scripts/deploy_on_vm.sh
+            bash "${VM_DEPLOY_PATH}/scripts/deploy_on_vm.sh"
