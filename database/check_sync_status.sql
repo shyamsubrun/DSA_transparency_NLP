@@ -66,11 +66,11 @@ LIMIT 10;
 \echo ''
 \echo '6. Données dans dsa_decisions mais pas dans moderation_entries (échantillon):'
 SELECT 
-    dd.id,
+    dd.uuid::TEXT as id,
     dd.application_date,
     dd.created_at
 FROM dsa_decisions dd
-LEFT JOIN moderation_entries me ON dd.id = me.id
+LEFT JOIN moderation_entries me ON dd.uuid::TEXT = me.id
 WHERE me.id IS NULL
 ORDER BY dd.created_at DESC
 LIMIT 10;
@@ -81,7 +81,7 @@ LIMIT 10;
 SELECT 
     COUNT(*) as unsynced_count
 FROM dsa_decisions dd
-LEFT JOIN moderation_entries me ON dd.id = me.id
+LEFT JOIN moderation_entries me ON dd.uuid::TEXT = me.id
 WHERE me.id IS NULL;
 
 -- 8. Vérifier les dates de dernière synchronisation

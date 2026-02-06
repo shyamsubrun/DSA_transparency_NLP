@@ -3,9 +3,9 @@
 -- Synchronise automatiquement dsa_decisions → moderation_entries
 -- ============================================
 
--- Fonction de synchronisation d'une ligne
-CREATE OR REPLACE FUNCTION sync_dsa_decision_to_moderation_entry()
-RETURNS TRIGGER AS $$
+-- Fonction de synchronisation d'une ligne (helper)
+CREATE OR REPLACE FUNCTION sync_dsa_decision_row(p_row dsa_decisions)
+RETURNS void AS $$
 DECLARE
     v_platform_id SMALLINT;
     v_category_id SMALLINT;
@@ -20,55 +20,57 @@ DECLARE
     v_delay_days INTEGER;
     v_incompatible_ground TEXT;
 BEGIN
+    v_content_type_id := NULL;
+
     -- Calculer decision_type
     v_decision_type := map_decision_type(
-        NEW.decision_visibility,
-        NEW.decision_account,
-        NEW.decision_monetary
+        p_row.decision_visibility,
+        p_row.decision_account,
+        p_row.decision_monetary
     );
     
     -- Parser content_type
-    v_content_type := parse_content_type(NEW.content_type);
+    v_content_type := parse_content_type(p_row.content_type);
     
     -- Parser automated_decision
-    v_automated_decision := parse_automated_decision(NEW.automated_decision);
+    v_automated_decision := parse_automated_decision(p_row.automated_decision);
     
     -- Extraire country
-    v_country := extract_country(NEW.territorial_scope);
+    v_country := extract_country(p_row.territorial_scope);
     
     -- Language
-    IF NEW.content_language IS NULL OR NEW.content_language = '' OR NEW.content_language = 'NaN' THEN
+    IF p_row.content_language IS NULL OR p_row.content_language = '' OR p_row.content_language = 'NaN' THEN
         v_language := 'unknown';
     ELSE
-        v_language := NEW.content_language;
+        v_language := p_row.content_language;
     END IF;
     
     -- Calculer delay_days
-    v_delay_days := calculate_delay_days(NEW.content_date, NEW.application_date);
+    v_delay_days := calculate_delay_days(p_row.content_date, p_row.application_date);
     
     -- Incompatible content ground
-    IF NEW.incompatible_content_ground IS NULL OR NEW.incompatible_content_ground = '' OR NEW.incompatible_content_ground = 'NaN' THEN
+    IF p_row.incompatible_content_ground IS NULL OR p_row.incompatible_content_ground = '' OR p_row.incompatible_content_ground = 'NaN' THEN
         v_incompatible_ground := NULL;
     ELSE
-        v_incompatible_ground := NEW.incompatible_content_ground;
+        v_incompatible_ground := p_row.incompatible_content_ground;
     END IF;
     
     -- Insérer/Récupérer IDs des tables de référence
-    INSERT INTO platforms (name) VALUES (NEW.platform_name)
+    INSERT INTO platforms (name) VALUES (p_row.platform_name)
     ON CONFLICT (name) DO NOTHING;
-    SELECT id INTO v_platform_id FROM platforms WHERE name = NEW.platform_name;
+    SELECT id INTO v_platform_id FROM platforms WHERE name = p_row.platform_name;
     
-    INSERT INTO categories (name) VALUES (NEW.category)
+    INSERT INTO categories (name) VALUES (p_row.category)
     ON CONFLICT (name) DO NOTHING;
-    SELECT id INTO v_category_id FROM categories WHERE name = NEW.category;
+    SELECT id INTO v_category_id FROM categories WHERE name = p_row.category;
     
     INSERT INTO decision_types (name) VALUES (v_decision_type)
     ON CONFLICT (name) DO NOTHING;
     SELECT id INTO v_decision_type_id FROM decision_types WHERE name = v_decision_type;
     
-    INSERT INTO decision_grounds (name) VALUES (NEW.decision_ground)
+    INSERT INTO decision_grounds (name) VALUES (p_row.decision_ground)
     ON CONFLICT (name) DO NOTHING;
-    SELECT id INTO v_decision_ground_id FROM decision_grounds WHERE name = NEW.decision_ground;
+    SELECT id INTO v_decision_ground_id FROM decision_grounds WHERE name = p_row.decision_ground;
     
     IF v_content_type != 'Other' THEN
         INSERT INTO content_types (name) VALUES (v_content_type)
@@ -83,19 +85,19 @@ BEGIN
         content_type_id, automated_detection, automated_decision,
         country_code, territorial_scope, language, delay_days
     ) VALUES (
-        NEW.uuid::TEXT,
-        NEW.application_date,
-        NEW.content_date,
+        p_row.uuid::TEXT,
+        p_row.application_date,
+        p_row.content_date,
         v_platform_id,
         v_category_id,
         v_decision_type_id,
         v_decision_ground_id,
         v_incompatible_ground,
         v_content_type_id,
-        NEW.automated_detection,
+        p_row.automated_detection,
         v_automated_decision,
         v_country,
-        NEW.territorial_scope,
+        p_row.territorial_scope,
         v_language,
         v_delay_days
     )
@@ -114,7 +116,14 @@ BEGIN
         territorial_scope = EXCLUDED.territorial_scope,
         language = EXCLUDED.language,
         delay_days = EXCLUDED.delay_days;
-    
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger wrapper
+CREATE OR REPLACE FUNCTION sync_dsa_decision_to_moderation_entry()
+RETURNS TRIGGER AS $$
+BEGIN
+    PERFORM sync_dsa_decision_row(NEW);
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -149,18 +158,11 @@ BEGIN
         SELECT d.* 
         FROM dsa_decisions d
         LEFT JOIN moderation_entries m ON m.id = d.uuid::TEXT
-        WHERE m.id IS NULL 
-           OR m.application_date != d.application_date
-           OR m.content_date IS DISTINCT FROM d.content_date
+        WHERE m.id IS NULL
     LOOP
         BEGIN
-            PERFORM sync_dsa_decision_to_moderation_entry() FROM (SELECT v_record.*) AS r;
-            
-            IF EXISTS (SELECT 1 FROM moderation_entries WHERE id = v_record.uuid::TEXT) THEN
-                v_updated := v_updated + 1;
-            ELSE
-                v_inserted := v_inserted + 1;
-            END IF;
+            PERFORM sync_dsa_decision_row(v_record);
+            v_inserted := v_inserted + 1;
         EXCEPTION WHEN OTHERS THEN
             RAISE WARNING 'Erreur sur UUID %: %', v_record.uuid, SQLERRM;
         END;
@@ -187,13 +189,12 @@ BEGIN
         SELECT * FROM dsa_decisions
     LOOP
         BEGIN
-            PERFORM sync_dsa_decision_to_moderation_entry() FROM (SELECT v_record.*) AS r;
-            
             IF EXISTS (SELECT 1 FROM moderation_entries WHERE id = v_record.uuid::TEXT) THEN
                 v_updated := v_updated + 1;
             ELSE
                 v_inserted := v_inserted + 1;
             END IF;
+            PERFORM sync_dsa_decision_row(v_record);
         EXCEPTION WHEN OTHERS THEN
             v_errors := v_errors + 1;
             RAISE WARNING 'Erreur sur UUID %: %', v_record.uuid, SQLERRM;
@@ -220,13 +221,12 @@ BEGIN
         WHERE application_date = sync_date
     LOOP
         BEGIN
-            PERFORM sync_dsa_decision_to_moderation_entry() FROM (SELECT v_record.*) AS r;
-            
             IF EXISTS (SELECT 1 FROM moderation_entries WHERE id = v_record.uuid::TEXT) THEN
                 v_updated := v_updated + 1;
             ELSE
                 v_inserted := v_inserted + 1;
             END IF;
+            PERFORM sync_dsa_decision_row(v_record);
         EXCEPTION WHEN OTHERS THEN
             RAISE WARNING 'Erreur sur UUID %: %', v_record.uuid, SQLERRM;
         END;
@@ -236,8 +236,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+COMMENT ON FUNCTION sync_dsa_decision_row(dsa_decisions) IS 
+'Synchronise une ligne dsa_decisions vers moderation_entries (helper)';
+
 COMMENT ON FUNCTION sync_dsa_decision_to_moderation_entry() IS 
-'Fonction trigger qui synchronise automatiquement une ligne de dsa_decisions vers moderation_entries';
+'Fonction trigger qui appelle sync_dsa_decision_row()';
 
 COMMENT ON FUNCTION sync_all_dsa_decisions() IS 
 'Synchronise toutes les données de dsa_decisions vers moderation_entries (pour migration initiale)';
