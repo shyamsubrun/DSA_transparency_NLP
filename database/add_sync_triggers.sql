@@ -152,7 +152,7 @@ RETURNS TABLE(
 DECLARE
     v_inserted BIGINT := 0;
     v_updated BIGINT := 0;
-    v_record RECORD;
+    v_record dsa_decisions%ROWTYPE;
 BEGIN
     FOR v_record IN 
         SELECT d.* 
@@ -183,7 +183,7 @@ DECLARE
     v_inserted BIGINT := 0;
     v_updated BIGINT := 0;
     v_errors BIGINT := 0;
-    v_record RECORD;
+    v_record dsa_decisions%ROWTYPE;
 BEGIN
     FOR v_record IN 
         SELECT * FROM dsa_decisions
@@ -214,7 +214,7 @@ RETURNS TABLE(
 DECLARE
     v_inserted BIGINT := 0;
     v_updated BIGINT := 0;
-    v_record RECORD;
+    v_record dsa_decisions%ROWTYPE;
 BEGIN
     FOR v_record IN 
         SELECT * FROM dsa_decisions
