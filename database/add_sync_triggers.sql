@@ -7,11 +7,11 @@
 CREATE OR REPLACE FUNCTION sync_dsa_decision_row(p_row dsa_decisions)
 RETURNS void AS $$
 DECLARE
-    v_platform_id SMALLINT;
-    v_category_id SMALLINT;
-    v_decision_type_id SMALLINT;
-    v_decision_ground_id SMALLINT;
-    v_content_type_id SMALLINT;
+    v_platform_id INTEGER;
+    v_category_id INTEGER;
+    v_decision_type_id INTEGER;
+    v_decision_ground_id INTEGER;
+    v_content_type_id INTEGER;
     v_decision_type TEXT;
     v_content_type TEXT;
     v_automated_decision BOOLEAN;

@@ -1,6 +1,6 @@
 import { FileType } from 'lucide-react';
-import ReactECharts from 'echarts-for-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
+import { ChartWithExport } from '../Charts/ChartWithExport';
 import { useScreenSize } from '../../hooks/useScreenSize';
 import { baseChartOptions, pieChartOptions, CHART_COLORS, DECISION_TYPE_COLORS, getResponsiveChartOptions, getResponsivePieChartOptions } from '../../utils/chartConfig';
 import styles from './Section.module.css';
@@ -197,53 +197,30 @@ export function ContentTypeSection() {
       </div>
 
       <div className={`${styles.chartGrid} ${styles.chartGrid2}`}>
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Decision Types by Content</h3>
-              <p className={styles.chartSubtitle}>How different content types are handled</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={stackedBarOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Content Type Distribution</h3>
-              <p className={styles.chartSubtitle}>Share of each content format</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={pieOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Response Delay by Content Type</h3>
-              <p className={styles.chartSubtitle}>Average days to action (bubble size = volume)</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={scatterOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Volume vs Delay</h3>
-              <p className={styles.chartSubtitle}>Efficiency analysis by content type</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={efficiencyOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
+        <ChartWithExport
+          title="Decision Types by Content"
+          subtitle="How different content types are handled"
+          option={stackedBarOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Content Type Distribution"
+          subtitle="Share of each content format"
+          option={pieOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Response Delay by Content Type"
+          subtitle="Average days to action (bubble size = volume)"
+          option={scatterOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Volume vs Delay"
+          subtitle="Efficiency analysis by content type"
+          option={efficiencyOption}
+          containerSize="default"
+        />
       </div>
     </section>
   );

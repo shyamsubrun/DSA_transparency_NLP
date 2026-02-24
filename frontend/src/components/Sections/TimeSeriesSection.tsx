@@ -1,6 +1,6 @@
 import { TrendingUp } from 'lucide-react';
-import ReactECharts from 'echarts-for-react';
 import { useFilteredData, useTimeSeriesData } from '../../hooks/useFilteredData';
+import { ChartWithExport } from '../Charts/ChartWithExport';
 import { useScreenSize } from '../../hooks/useScreenSize';
 import { baseChartOptions, CHART_COLORS, PLATFORM_COLORS, getResponsiveChartOptions } from '../../utils/chartConfig';
 import styles from './Section.module.css';
@@ -143,41 +143,25 @@ export function TimeSeriesSection() {
       </div>
 
       <div className={`${styles.chartGrid} ${styles.chartGrid2}`}>
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Total Moderation Actions</h3>
-              <p className={styles.chartSubtitle}>Monthly trend of all actions</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={totalActionsOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Average Response Delay</h3>
-              <p className={styles.chartSubtitle}>Days between content creation and action</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={delayEvolutionOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
-
-        <div className={`${styles.chartCard} ${styles.chartCardFull}`}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Actions by Platform</h3>
-              <p className={styles.chartSubtitle}>Monthly breakdown per platform</p>
-            </div>
-          </div>
-          <div className={styles.chartContainerLg}>
-            <ReactECharts option={platformSeriesOption} style={{ height: '100%', minHeight: 400 }} />
-          </div>
-        </div>
+        <ChartWithExport
+          title="Total Moderation Actions"
+          subtitle="Monthly trend of all actions"
+          option={totalActionsOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Average Response Delay"
+          subtitle="Days between content creation and action"
+          option={delayEvolutionOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Actions by Platform"
+          subtitle="Monthly breakdown per platform"
+          option={platformSeriesOption}
+          containerSize="lg"
+          fullWidth
+        />
       </div>
     </section>
   );

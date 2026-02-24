@@ -1,6 +1,6 @@
 import { Building2 } from 'lucide-react';
-import ReactECharts from 'echarts-for-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
+import { ChartWithExport } from '../Charts/ChartWithExport';
 import { useScreenSize } from '../../hooks/useScreenSize';
 import { baseChartOptions, PLATFORM_COLORS, DECISION_TYPE_COLORS, CHART_COLORS, getResponsiveChartOptions } from '../../utils/chartConfig';
 import styles from './Section.module.css';
@@ -160,41 +160,24 @@ export function PlatformsSection() {
       </div>
 
       <div className={`${styles.chartGrid} ${styles.chartGrid3}`}>
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Actions by Platform</h3>
-              <p className={styles.chartSubtitle}>Total moderation actions</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={platformBarOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Decision Types by Platform</h3>
-              <p className={styles.chartSubtitle}>Stacked breakdown of decisions</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={stackedBarOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Category Profile</h3>
-              <p className={styles.chartSubtitle}>Top 3 platforms comparison</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={radarOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
+        <ChartWithExport
+          title="Actions by Platform"
+          subtitle="Total moderation actions"
+          option={platformBarOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Decision Types by Platform"
+          subtitle="Stacked breakdown of decisions"
+          option={stackedBarOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Category Profile"
+          subtitle="Top 3 platforms comparison"
+          option={radarOption}
+          containerSize="default"
+        />
       </div>
     </section>
   );

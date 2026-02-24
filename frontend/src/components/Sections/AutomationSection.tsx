@@ -1,6 +1,6 @@
 import { Bot } from 'lucide-react';
-import ReactECharts from 'echarts-for-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
+import { ChartWithExport } from '../Charts/ChartWithExport';
 import { pieChartOptions, CHART_COLORS, PLATFORM_COLORS } from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
@@ -269,53 +269,30 @@ export function AutomationSection() {
       </div>
 
       <div className={`${styles.chartGrid} ${styles.chartGrid2}`}>
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Automated Detection</h3>
-              <p className={styles.chartSubtitle}>Content flagged by AI systems</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={detectionPieOption} style={{ height: '100%', minHeight: 280 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Automated Decisions</h3>
-              <p className={styles.chartSubtitle}>Decisions made without human review</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={decisionPieOption} style={{ height: '100%', minHeight: 280 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Automation by Platform</h3>
-              <p className={styles.chartSubtitle}>Detection and decision rates comparison</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={platformAutomationOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Automation Heatmap</h3>
-              <p className={styles.chartSubtitle}>Decision automation rate by platform × category</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={heatmapOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
+        <ChartWithExport
+          title="Automated Detection"
+          subtitle="Content flagged by AI systems"
+          option={detectionPieOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Automated Decisions"
+          subtitle="Decisions made without human review"
+          option={decisionPieOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Automation by Platform"
+          subtitle="Detection and decision rates comparison"
+          option={platformAutomationOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Automation Heatmap"
+          subtitle="Decision automation rate by platform × category"
+          option={heatmapOption}
+          containerSize="default"
+        />
       </div>
     </section>
   );

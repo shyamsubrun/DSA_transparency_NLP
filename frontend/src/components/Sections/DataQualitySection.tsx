@@ -1,6 +1,6 @@
 import { AlertTriangle } from 'lucide-react';
-import ReactECharts from 'echarts-for-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
+import { ChartWithExport } from '../Charts/ChartWithExport';
 import { baseChartOptions } from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
@@ -159,29 +159,18 @@ export function DataQualitySection() {
       </div>
 
       <div className={`${styles.chartGrid} ${styles.chartGrid2}`}>
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Missing Values by Field</h3>
-              <p className={styles.chartSubtitle}>Percentage of records with missing data</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={missingBarOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Overall Data Completeness</h3>
-              <p className={styles.chartSubtitle}>Aggregate quality score</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={gaugeOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
+        <ChartWithExport
+          title="Missing Values by Field"
+          subtitle="Percentage of records with missing data"
+          option={missingBarOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Overall Data Completeness"
+          subtitle="Aggregate quality score"
+          option={gaugeOption}
+          containerSize="default"
+        />
 
         <div className={`${styles.chartCard} ${styles.chartCardFull}`}>
           <div className={styles.chartHeader}>

@@ -1,6 +1,6 @@
 import { Scale } from 'lucide-react';
-import ReactECharts from 'echarts-for-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
+import { ChartWithExport } from '../Charts/ChartWithExport';
 import { baseChartOptions, CHART_COLORS } from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
@@ -201,41 +201,25 @@ export function LegalGroundsSection() {
       </div>
 
       <div className={`${styles.chartGrid} ${styles.chartGrid2}`}>
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Top Decision Grounds</h3>
-              <p className={styles.chartSubtitle}>Most frequently cited legal bases</p>
-            </div>
-          </div>
-          <div className={styles.chartContainerLg}>
-            <ReactECharts option={groundsBarOption} style={{ height: '100%', minHeight: 400 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Legal Basis vs Terms of Service</h3>
-              <p className={styles.chartSubtitle}>Distribution of grounds type</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={legalVsTosOption} style={{ height: '100%', minHeight: 300 }} />
-          </div>
-        </div>
-
-        <div className={`${styles.chartCard} ${styles.chartCardFull}`}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Categories by Decision Ground</h3>
-              <p className={styles.chartSubtitle}>Hierarchical view of content categories within each legal ground</p>
-            </div>
-          </div>
-          <div className={styles.chartContainerLg}>
-            <ReactECharts option={treemapOption} style={{ height: '100%', minHeight: 400 }} />
-          </div>
-        </div>
+        <ChartWithExport
+          title="Top Decision Grounds"
+          subtitle="Most frequently cited legal bases"
+          option={groundsBarOption}
+          containerSize="lg"
+        />
+        <ChartWithExport
+          title="Legal Basis vs Terms of Service"
+          subtitle="Distribution of grounds type"
+          option={legalVsTosOption}
+          containerSize="default"
+        />
+        <ChartWithExport
+          title="Categories by Decision Ground"
+          subtitle="Hierarchical view of content categories within each legal ground"
+          option={treemapOption}
+          containerSize="lg"
+          fullWidth
+        />
       </div>
     </section>
   );

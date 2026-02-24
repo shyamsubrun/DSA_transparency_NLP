@@ -1,6 +1,6 @@
 import { Globe } from 'lucide-react';
-import ReactECharts from 'echarts-for-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
+import { ChartWithExport } from '../Charts/ChartWithExport';
 import { baseChartOptions, CHART_COLORS } from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
@@ -155,41 +155,25 @@ export function GeographySection() {
       </div>
 
       <div className={`${styles.chartGrid} ${styles.chartGrid2}`}>
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>EU Country Distribution</h3>
-              <p className={styles.chartSubtitle}>Actions visualized by country scale</p>
-            </div>
-          </div>
-          <div className={styles.chartContainerLg}>
-            <ReactECharts option={mapVisualization} style={{ height: '100%', minHeight: 400 }} />
-          </div>
-        </div>
-
-        <div className={styles.chartCard}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Top Affected Countries</h3>
-              <p className={styles.chartSubtitle}>Ranked by moderation actions</p>
-            </div>
-          </div>
-          <div className={styles.chartContainerLg}>
-            <ReactECharts option={countryBarOption} style={{ height: '100%', minHeight: 400 }} />
-          </div>
-        </div>
-
-        <div className={`${styles.chartCard} ${styles.chartCardFull}`}>
-          <div className={styles.chartHeader}>
-            <div>
-              <h3 className={styles.chartTitle}>Actions by Language</h3>
-              <p className={styles.chartSubtitle}>Content language distribution</p>
-            </div>
-          </div>
-          <div className={styles.chartContainer}>
-            <ReactECharts option={languageOption} style={{ height: '100%', minHeight: 280 }} />
-          </div>
-        </div>
+        <ChartWithExport
+          title="EU Country Distribution"
+          subtitle="Actions visualized by country scale"
+          option={mapVisualization}
+          containerSize="lg"
+        />
+        <ChartWithExport
+          title="Top Affected Countries"
+          subtitle="Ranked by moderation actions"
+          option={countryBarOption}
+          containerSize="lg"
+        />
+        <ChartWithExport
+          title="Actions by Language"
+          subtitle="Content language distribution"
+          option={languageOption}
+          containerSize="default"
+          fullWidth
+        />
       </div>
     </section>
   );
