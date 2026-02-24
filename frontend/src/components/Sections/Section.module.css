@@ -123,6 +123,20 @@
   min-height: 400px;
 }
 
+.chartContainerXl {
+  width: 100%;
+  min-height: 500px;
+}
+
+.mapLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+  color: var(--text-tertiary);
+  font-size: var(--text-sm);
+}
+
 .emptyState {
   display: flex;
   flex-direction: column;
@@ -210,6 +224,10 @@
   .chartContainerLg {
     min-height: 350px;
   }
+
+  .chartContainerXl {
+    min-height: 420px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -267,6 +285,14 @@
     min-height: 300px;
   }
 
+  .chartContainerXl {
+    min-height: 350px;
+  }
+
+  .mapLoading {
+    min-height: 350px;
+  }
+
   .tableContainer {
     max-height: 300px;
   }
@@ -313,6 +339,14 @@
 
   .chartContainerLg {
     min-height: 280px;
+  }
+
+  .chartContainerXl {
+    min-height: 300px;
+  }
+
+  .mapLoading {
+    min-height: 300px;
   }
 
   .tableContainer {

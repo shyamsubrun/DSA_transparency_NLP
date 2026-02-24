@@ -1,25 +1,15 @@
 import { Globe } from 'lucide-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
+import { EuropeMapChart } from '../Charts/EuropeMapChart';
 import { baseChartOptions, CHART_COLORS } from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
 export function GeographySection() {
   const { aggregations, stats, data } = useFilteredData();
 
-  // Sort countries by count (country codes from data)
   const countryData = Object.entries(aggregations.byCountry)
     .sort((a, b) => b[1] - a[1]);
-
-  const maxCount = countryData[0]?.[1] || 1;
-
-  // Get language distribution from actual data
-  const languageData = data.reduce((acc, entry) => {
-    if (entry.language) {
-      acc[entry.language] = (acc[entry.language] || 0) + 1;
-    }
-    return acc;
-  }, {} as Record<string, number>);
 
   // Horizontal bar: Top countries
   const countryBarOption = {
@@ -56,61 +46,13 @@ export function GeographySection() {
     }],
   };
 
-  // Simple visual map representation (since we can't load actual map geo data)
-  const mapVisualization = {
-    tooltip: {
-      trigger: 'item',
-      formatter: (params: { name: string; value: number }) => {
-        return `${params.name}<br/>Actions: <strong>${params.value || 0}</strong>`;
-      },
-    },
-    visualMap: {
-      min: 0,
-      max: maxCount,
-      left: 'left',
-      top: 'bottom',
-      text: ['High', 'Low'],
-      calculable: true,
-      inRange: {
-        color: ['#e0f2fe', '#7dd3fc', '#0ea5e9', '#0369a1', '#075985'],
-      },
-      textStyle: { color: '#64748b', fontSize: 11 },
-    },
-    series: [{
-      type: 'pie',
-      radius: ['0%', '85%'],
-      center: ['50%', '50%'],
-      roseType: 'area',
-      itemStyle: {
-        borderRadius: 5,
-        borderColor: '#fff',
-        borderWidth: 2,
-      },
-      label: {
-        show: true,
-        formatter: (params: { name: string }) => {
-          // params.name is already a country code (2 letters)
-          return params.name.length === 2 ? params.name : params.name.substring(0, 2).toUpperCase();
-        },
-        fontSize: 10,
-        color: '#1e293b',
-      },
-      data: countryData.map(([name, value], idx) => ({
-        name,
-        value,
-        itemStyle: {
-          color: {
-            type: 'linear',
-            x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [
-              { offset: 0, color: CHART_COLORS[idx % CHART_COLORS.length] },
-              { offset: 1, color: CHART_COLORS[(idx + 1) % CHART_COLORS.length] },
-            ],
-          },
-        },
-      })),
-    }],
-  };
+  // Language distribution from actual data
+  const languageData = data.reduce((acc, entry) => {
+    if (entry.language) {
+      acc[entry.language] = (acc[entry.language] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
 
   const languageChartData = Object.entries(languageData)
     .filter(([, count]) => count > 0)
@@ -155,11 +97,9 @@ export function GeographySection() {
       </div>
 
       <div className={`${styles.chartGrid} ${styles.chartGrid2}`}>
-        <ChartWithExport
-          title="EU Country Distribution"
-          subtitle="Actions visualized by country scale"
-          option={mapVisualization}
-          containerSize="lg"
+        <EuropeMapChart
+          byCountry={aggregations.byCountry}
+          countryDetails={aggregations.countryDetails}
         />
         <ChartWithExport
           title="Top Affected Countries"
@@ -178,4 +118,3 @@ export function GeographySection() {
     </section>
   );
 }
-

@@ -142,6 +142,38 @@ export function useFilteredData() {
       return acc;
     }, {} as Record<string, { total: number; automated: number }>);
 
+    // Per-country details for map tooltip
+    const countryDetails = filteredData.reduce((acc, d) => {
+      if (!d.country) return acc;
+      if (!acc[d.country]) {
+        acc[d.country] = {
+          total: 0,
+          automatedDetection: 0,
+          automatedDecision: 0,
+          delaySum: 0,
+          delayCount: 0,
+          categories: {} as Record<string, number>,
+          platforms: {} as Record<string, number>,
+        };
+      }
+      const c = acc[d.country];
+      c.total++;
+      if (d.automated_detection) c.automatedDetection++;
+      if (d.automated_decision) c.automatedDecision++;
+      if (d.delay_days !== null) { c.delaySum += d.delay_days; c.delayCount++; }
+      c.categories[d.category] = (c.categories[d.category] || 0) + 1;
+      c.platforms[d.platform_name] = (c.platforms[d.platform_name] || 0) + 1;
+      return acc;
+    }, {} as Record<string, {
+      total: number;
+      automatedDetection: number;
+      automatedDecision: number;
+      delaySum: number;
+      delayCount: number;
+      categories: Record<string, number>;
+      platforms: Record<string, number>;
+    }>);
+
     return {
       byPlatform,
       byCategory,
@@ -157,7 +189,8 @@ export function useFilteredData() {
       delayByContentType,
       groundsAnalysis,
       categoryByGround,
-      automationHeatmap
+      automationHeatmap,
+      countryDetails
     };
   }, [filteredData]);
 
