@@ -1,4 +1,5 @@
 import { Globe } from 'lucide-react';
+import type { EChartsOption } from 'echarts';
 import { useFilteredData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
 import { EuropeMapChart } from '../Charts/EuropeMapChart';
@@ -104,13 +105,13 @@ export function GeographySection() {
         <ChartWithExport
           title="Top Affected Countries"
           subtitle="Ranked by moderation actions"
-          option={countryBarOption}
+          option={countryBarOption as unknown as EChartsOption}
           containerSize="lg"
         />
         <ChartWithExport
           title="Actions by Language"
           subtitle="Content language distribution"
-          option={languageOption}
+          option={languageOption as unknown as EChartsOption}
           containerSize="default"
           fullWidth
         />

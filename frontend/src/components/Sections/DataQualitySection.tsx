@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
+import type { EChartsOption } from 'echarts';
 import { useFilteredData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
 import { baseChartOptions } from '../../utils/chartConfig';
@@ -162,13 +163,13 @@ export function DataQualitySection() {
         <ChartWithExport
           title="Missing Values by Field"
           subtitle="Percentage of records with missing data"
-          option={missingBarOption}
+          option={missingBarOption as unknown as EChartsOption}
           containerSize="default"
         />
         <ChartWithExport
           title="Overall Data Completeness"
           subtitle="Aggregate quality score"
-          option={gaugeOption}
+          option={gaugeOption as unknown as EChartsOption}
           containerSize="default"
         />
 

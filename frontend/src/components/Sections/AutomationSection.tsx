@@ -1,4 +1,5 @@
 import { Bot } from 'lucide-react';
+import type { EChartsOption } from 'echarts';
 import { useFilteredData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
 import { pieChartOptions, CHART_COLORS, PLATFORM_COLORS } from '../../utils/chartConfig';
@@ -272,25 +273,25 @@ export function AutomationSection() {
         <ChartWithExport
           title="Automated Detection"
           subtitle="Content flagged by AI systems"
-          option={detectionPieOption}
+          option={detectionPieOption as unknown as EChartsOption}
           containerSize="default"
         />
         <ChartWithExport
           title="Automated Decisions"
           subtitle="Decisions made without human review"
-          option={decisionPieOption}
+          option={decisionPieOption as unknown as EChartsOption}
           containerSize="default"
         />
         <ChartWithExport
           title="Automation by Platform"
           subtitle="Detection and decision rates comparison"
-          option={platformAutomationOption}
+          option={platformAutomationOption as unknown as EChartsOption}
           containerSize="default"
         />
         <ChartWithExport
           title="Automation Heatmap"
           subtitle="Decision automation rate by platform × category"
-          option={heatmapOption}
+          option={heatmapOption as unknown as EChartsOption}
           containerSize="default"
         />
       </div>

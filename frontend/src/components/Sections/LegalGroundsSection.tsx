@@ -1,4 +1,5 @@
 import { Scale } from 'lucide-react';
+import type { EChartsOption } from 'echarts';
 import { useFilteredData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
 import { baseChartOptions, CHART_COLORS } from '../../utils/chartConfig';
@@ -131,8 +132,9 @@ export function LegalGroundsSection() {
 
   const treemapOption = {
     tooltip: {
-      formatter: (info: { name: string; value: number; treePathInfo: Array<{ name: string }> }) => {
-        const path = info.treePathInfo.map(p => p.name).join(' → ');
+      formatter: (params: unknown) => {
+        const info = params as { name: string; value: number; treePathInfo?: Array<{ name: string }> };
+        const path = (info.treePathInfo ?? []).map(p => p.name).join(' → ');
         return `${path}<br/>Count: <strong>${info.value}</strong>`;
       },
     },
@@ -204,19 +206,19 @@ export function LegalGroundsSection() {
         <ChartWithExport
           title="Top Decision Grounds"
           subtitle="Most frequently cited legal bases"
-          option={groundsBarOption}
+          option={groundsBarOption as unknown as EChartsOption}
           containerSize="lg"
         />
         <ChartWithExport
           title="Legal Basis vs Terms of Service"
           subtitle="Distribution of grounds type"
-          option={legalVsTosOption}
+          option={legalVsTosOption as unknown as EChartsOption}
           containerSize="default"
         />
         <ChartWithExport
           title="Categories by Decision Ground"
           subtitle="Hierarchical view of content categories within each legal ground"
-          option={treemapOption}
+          option={treemapOption as unknown as EChartsOption}
           containerSize="lg"
           fullWidth
         />
