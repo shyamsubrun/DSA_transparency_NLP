@@ -7,6 +7,7 @@
 // To switch modes, change the USE_MOCK_DATA constant below.
 //
 import type { ModerationEntry } from './types';
+import type { EChartsOption } from 'echarts';
 import { fetchMockModerationData, fetchMockStats, getMockFilterOptions } from './mockData';
 
 // Set to true to use mock data, false to use real API
@@ -53,6 +54,24 @@ interface Filters {
   contentTypes?: string[];
   automatedDetection?: boolean | null;
   automatedDecision?: boolean | null;
+}
+
+export interface CustomChartRequest {
+  prompt: string;
+  filters?: Filters;
+}
+
+export interface CustomChartResponse {
+  chartType: 'line' | 'bar' | 'pie' | 'scatter' | 'heatmap';
+  title: string;
+  subtitle: string;
+  explanation: string;
+  sql?: string;
+  columns: string[];
+  rows: Record<string, unknown>[];
+  echartsOption: EChartsOption;
+  cached: boolean;
+  durationMs: number;
 }
 
 /**
@@ -169,6 +188,35 @@ export async function fetchStats(filters?: Filters): Promise<KPIStats> {
   const response = await fetch(`${API_BASE_URL}/moderation/stats?${params}`);
   if (!response.ok) {
     throw new Error(`Failed to fetch stats: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Generate a custom chart from natural language prompt
+ */
+export async function fetchCustomChart(
+  prompt: string,
+  filters?: Filters,
+): Promise<CustomChartResponse> {
+  if (USE_MOCK_DATA) {
+    throw new Error('Custom chart requires API mode (VITE_USE_MOCK_DATA=false).');
+  }
+
+  const response = await fetch(`${API_BASE_URL}/analytics/custom-chart`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt, filters }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData?.message ||
+        errorData?.error ||
+        `Failed to generate chart: ${response.statusText}`,
+    );
   }
 
   return response.json();

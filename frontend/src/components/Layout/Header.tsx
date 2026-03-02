@@ -1,13 +1,14 @@
-import { Scale, Filter, RotateCcw } from 'lucide-react';
+import { Scale, Filter, RotateCcw, Sparkles } from 'lucide-react';
 import { useFilters } from '../../context/FilterContext';
 import styles from './Header.module.css';
 
 interface HeaderProps {
   onToggleFilters: () => void;
   filtersOpen: boolean;
+  onOpenCustomQuery: () => void;
 }
 
-export function Header({ onToggleFilters, filtersOpen }: HeaderProps) {
+export function Header({ onToggleFilters, filtersOpen, onOpenCustomQuery }: HeaderProps) {
   const { activeFilterCount, resetFilters } = useFilters();
 
   return (
@@ -23,6 +24,11 @@ export function Header({ onToggleFilters, filtersOpen }: HeaderProps) {
       </div>
 
       <div className={styles.actions}>
+        <button className={styles.queryBtn} onClick={onOpenCustomQuery}>
+          <Sparkles size={16} />
+          AI Query
+        </button>
+
         {activeFilterCount > 0 && (
           <button 
             className={styles.resetBtn}

@@ -128,6 +128,69 @@
   min-height: 500px;
 }
 
+.queryCard {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+.queryForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.queryTextarea {
+  width: 100%;
+  min-height: 88px;
+  border: 1px solid var(--color-secondary-300);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  resize: vertical;
+}
+
+.queryActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.queryBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary-600);
+  color: var(--text-inverse);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+}
+
+.queryBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.queryHint {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.queryMeta {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-2);
+}
+
 .mapLoading {
   display: flex;
   align-items: center;

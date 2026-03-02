@@ -8,6 +8,7 @@ import cors from 'cors';
 import moderationRoutes from './routes/moderation.routes.js';
 import filtersRoutes from './routes/filters.routes.js';
 import verificationRoutes from './routes/verification.routes.js';
+import analyticsRoutes from './routes/analytics.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -32,6 +33,7 @@ app.get('/health', (req, res) => {
 app.use('/api/moderation', moderationRoutes);
 app.use('/api/filters', filtersRoutes);
 app.use('/api/verification', verificationRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // 404 handler
 app.use((req, res) => {

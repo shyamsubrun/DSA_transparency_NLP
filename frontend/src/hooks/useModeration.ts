@@ -1,5 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { fetchModerationData, fetchFilterOptions, fetchStats } from '../data/dataService';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  fetchCustomChart,
+  fetchModerationData,
+  fetchFilterOptions,
+  fetchStats,
+} from '../data/dataService';
 import { useFilters } from '../context/FilterContext';
 
 export function useModerationData(page = 1, limit = 1000) {
@@ -45,3 +50,15 @@ export function useModerationStats() {
   });
 }
 
+export function useCustomChartQuery() {
+  const { filters } = useFilters();
+  const apiFilters = {
+    ...filters,
+    dateRange: filters.dateRange || undefined,
+  };
+
+  return useMutation({
+    mutationFn: (prompt: string) => fetchCustomChart(prompt, apiFilters),
+    retry: 1,
+  });
+}

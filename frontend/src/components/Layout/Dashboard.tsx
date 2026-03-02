@@ -10,12 +10,21 @@ import { AutomationSection } from '../Sections/AutomationSection';
 import { GeographySection } from '../Sections/GeographySection';
 import { ContentTypeSection } from '../Sections/ContentTypeSection';
 import { DataQualitySection } from '../Sections/DataQualitySection';
+import { CustomQuerySection } from '../Sections/CustomQuerySection';
 import { useFilteredData } from '../../hooks/useFilteredData';
 import styles from './Dashboard.module.css';
 
 export function Dashboard() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const { isLoading, isError, error } = useFilteredData();
+  const customSectionId = 'custom-query-section';
+
+  const handleOpenCustomQuery = () => {
+    const section = document.getElementById(customSectionId);
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -23,6 +32,7 @@ export function Dashboard() {
         <Header 
           onToggleFilters={() => setFiltersOpen(!filtersOpen)} 
           filtersOpen={filtersOpen}
+          onOpenCustomQuery={handleOpenCustomQuery}
         />
         <div style={{ 
           display: 'flex', 
@@ -47,6 +57,7 @@ export function Dashboard() {
         <Header 
           onToggleFilters={() => setFiltersOpen(!filtersOpen)} 
           filtersOpen={filtersOpen}
+          onOpenCustomQuery={handleOpenCustomQuery}
         />
         <div style={{ 
           display: 'flex', 
@@ -107,6 +118,7 @@ export function Dashboard() {
       <Header 
         onToggleFilters={() => setFiltersOpen(!filtersOpen)} 
         filtersOpen={filtersOpen}
+        onOpenCustomQuery={handleOpenCustomQuery}
       />
       
       <FilterPanel 
@@ -116,6 +128,7 @@ export function Dashboard() {
 
       <main className={styles.main}>
         <div className={styles.container}>
+          <CustomQuerySection sectionId={customSectionId} />
           <OverviewSection />
           <TimeSeriesSection />
           <PlatformsSection />

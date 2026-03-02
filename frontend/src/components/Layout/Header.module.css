@@ -52,6 +52,25 @@
   gap: var(--space-3);
 }
 
+.queryBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-primary-600);
+  border: 1px solid var(--color-primary-700);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-inverse);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.queryBtn:hover {
+  background: var(--color-primary-700);
+}
+
 .filterBtn {
   display: flex;
   align-items: center;
