@@ -2,7 +2,7 @@
 # Script pour vérifier la base de données PostgreSQL
 
 # Variables de connexion
-DB_HOST="35.223.190.104"
+DB_HOST="34.46.198.22"
 DB_PORT="5432"
 DB_NAME="dsa"
 DB_USER="dsa_admin"

@@ -39,7 +39,7 @@ $env:PGPASSWORD="mon_mot_de_passe"; .\scripts\run_data_verification.ps1
 ### Exécution directe avec psql
 
 ```bash
-psql -h 35.223.190.104 -p 5432 -U dsa_admin -d dsa -f database/verify_data_completeness.sql
+psql -h 34.46.198.22 -p 5432 -U dsa_admin -d dsa -f database/verify_data_completeness.sql
 ```
 
 ## Ce que le script vérifie

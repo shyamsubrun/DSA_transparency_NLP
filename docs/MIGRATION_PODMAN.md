@@ -20,7 +20,7 @@ Actuellement, le site est déployé en **installation directe** :
 
 1. **Se connecter à la VM** :
 ```bash
-ssh raouf.abdallah@35.223.190.104
+ssh raouf@34.46.198.22
 ```
 
 2. **Mettre à jour le code** :

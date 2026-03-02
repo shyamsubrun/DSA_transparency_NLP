@@ -67,7 +67,7 @@ Essayez sans spécifier l'IP (connexion locale):
 ```bash
 export PGPASSWORD="Mohamed2025!"
 psql -U dsa_admin -d dsa
-# (sans -h 35.223.190.104)
+# (sans -h 34.46.198.22)
 ```
 
 ## Commandes à Exécuter Maintenant

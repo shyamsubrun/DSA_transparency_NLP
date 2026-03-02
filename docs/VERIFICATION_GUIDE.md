@@ -8,10 +8,10 @@ Si vous avez accès à `psql` (client PostgreSQL), vous pouvez exécuter directe
 
 ```bash
 # Sur Linux/Mac
-psql -h 35.223.190.104 -p 5432 -U dsa_admin -d dsa -f database/verify_data_completeness.sql
+psql -h 34.46.198.22 -p 5432 -U dsa_admin -d dsa -f database/verify_data_completeness.sql
 
 # Sur Windows (si psql est installé)
-psql -h 35.223.190.104 -p 5432 -U dsa_admin -d dsa -f database\verify_data_completeness.sql
+psql -h 34.46.198.22 -p 5432 -U dsa_admin -d dsa -f database\verify_data_completeness.sql
 ```
 
 **Installer psql :**
@@ -23,7 +23,7 @@ psql -h 35.223.190.104 -p 5432 -U dsa_admin -d dsa -f database\verify_data_compl
 
 ```powershell
 $env:PGPASSWORD="Mohamed2025!"
-.\scripts\run_data_verification.ps1 -DbHost 35.223.190.104 -Port 5432 -Database dsa -User dsa_admin
+.\scripts\run_data_verification.ps1 -DbHost 34.46.198.22 -Port 5432 -Database dsa -User dsa_admin
 ```
 
 **Note** : Nécessite que `psql` soit installé et dans le PATH.
@@ -37,7 +37,7 @@ Si vous avez Python et psycopg2 installés :
 pip install psycopg2-binary
 
 # Exécuter le script
-python scripts/run_data_verification.py -H 35.223.190.104 -p 5432 -d dsa -U dsa_admin
+python scripts/run_data_verification.py -H 34.46.198.22 -p 5432 -d dsa -U dsa_admin
 ```
 
 ### Option 4 : Exécuter via SSH sur la VM
@@ -46,7 +46,7 @@ Si vous avez accès SSH à la VM où se trouve PostgreSQL :
 
 ```bash
 # Se connecter à la VM
-ssh utilisateur@35.223.190.104
+ssh utilisateur@34.46.198.22
 
 # Sur la VM, exécuter
 sudo -u postgres psql -d dsa -f /chemin/vers/verify_data_completeness.sql

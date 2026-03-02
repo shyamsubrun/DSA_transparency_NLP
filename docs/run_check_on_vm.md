@@ -4,7 +4,7 @@
 
 1. **Connectez-vous à la VM:**
 ```bash
-ssh raouf.abdallah@35.223.190.104
+ssh raouf@34.46.198.22
 ```
 
 2. **Copiez-collez ce script complet dans le terminal:**
@@ -18,7 +18,7 @@ echo "🔍 VÉRIFICATION COMPLÈTE VM + POSTGRESQL"
 echo "=========================================="
 echo ""
 
-DB_HOST="35.223.190.104"
+DB_HOST="34.46.198.22"
 DB_PORT="5432"
 DB_NAME="dsa"
 DB_USER="dsa_admin"
@@ -60,12 +60,12 @@ unset PGPASSWORD
 
 1. **Depuis votre machine locale, copiez le script sur la VM:**
 ```bash
-scp scripts/complete_check.sh raouf.abdallah@35.223.190.104:~/
+scp scripts/complete_check.sh raouf@34.46.198.22:~/
 ```
 
 2. **Connectez-vous à la VM:**
 ```bash
-ssh raouf.abdallah@35.223.190.104
+ssh raouf@34.46.198.22
 ```
 
 3. **Rendez le script exécutable et exécutez-le:**
@@ -86,7 +86,7 @@ df -h
 
 # 2. Se connecter à PostgreSQL
 export PGPASSWORD="Mohamed2025!"
-psql -h 35.223.190.104 -p 5432 -U dsa_admin -d dsa
+psql -h 34.46.198.22 -p 5432 -U dsa_admin -d dsa
 
 # 3. Dans psql, exécutez:
 \dt

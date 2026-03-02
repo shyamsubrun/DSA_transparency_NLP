@@ -83,10 +83,10 @@ Une fois la migration terminée, vous pouvez:
 
 ```bash
 # Copier le fichier SQL sur la VM
-scp database/create_optimized_schema.sql raouf.abdallah@35.223.190.104:~/
+scp database/create_optimized_schema.sql raouf@34.46.198.22:~/
 
 # Se connecter à la VM
-ssh raouf.abdallah@35.223.190.104
+ssh raouf@34.46.198.22
 
 # Exécuter le schéma
 sudo -u postgres psql -d dsa -f ~/create_optimized_schema.sql
@@ -96,7 +96,7 @@ sudo -u postgres psql -d dsa -f ~/create_optimized_schema.sql
 
 Créer fichier `.env`:
 ```env
-DB_HOST=35.223.190.104
+DB_HOST=34.46.198.22
 DB_PORT=5432
 DB_NAME=dsa
 DB_USER=dsa_admin

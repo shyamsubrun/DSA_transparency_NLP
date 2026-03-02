@@ -4,7 +4,7 @@ Ce guide explique comment déployer le dashboard DSA sur la VM après la migrati
 
 ## État actuel
 
-Docker est installé sur la VM mais nécessite `sudo` pour l'utilisateur `raouf.abdallah`.
+Docker est installé sur la VM mais nécessite `sudo` pour l'utilisateur `raouf`.
 
 ## Option 1 : Corriger les permissions Docker (recommandé)
 
@@ -36,7 +36,7 @@ sudo docker compose up -d
 ### Étape 1 : Se connecter à la VM
 
 ```bash
-ssh raouf.abdallah@35.223.190.104
+ssh raouf@34.46.198.22
 ```
 
 ### Étape 2 : Aller dans le dossier du projet
@@ -87,8 +87,8 @@ docker compose ps  # ou sudo docker compose ps
 
 ### Étape 6 : Tester l'accès
 
-- **Backend** : http://35.223.190.104:3001/health
-- **Frontend** : http://35.223.190.104
+- **Backend** : http://34.46.198.22:3001/health
+- **Frontend** : http://34.46.198.22
 
 ## CI/CD avec GitHub Actions
 
@@ -98,11 +98,22 @@ Un workflow déploie automatiquement sur la VM à chaque push sur `main`.
 
 Ajoutez ces secrets dans votre repository GitHub (Settings → Secrets and variables → Actions) :
 
-- `VM_HOST` : IP ou nom de domaine de la VM (ex: `35.223.190.104`)
-- `VM_USER` : utilisateur SSH (ex: `raouf.abdallah`)
+- `VM_HOST` : IP ou nom de domaine de la VM (ex: `34.46.198.22`)
+- `VM_USER` : utilisateur SSH (ex: `raouf`)
 - `VM_SSH_KEY` : clé privée SSH **au format OpenSSH**, en multi‑ligne
 - `VM_PORT` : port SSH (optionnel, par défaut `22`)
 - `VM_DEPLOY_PATH` : chemin du projet (optionnel, par défaut `/home/<user>/dsa-dashboard`)
+
+### Mise à jour des secrets (changement d’IP ou d’utilisateur)
+
+Si l’IP ou l’utilisateur de la VM change :
+
+1. Sur GitHub : **Settings** → **Secrets and variables** → **Actions**.
+2. Pour chaque secret à modifier, cliquez sur le nom puis **Update** :
+   - **VM_HOST** : mettre la nouvelle IP (ex. `34.46.198.22`).
+   - **VM_USER** : mettre le nouvel utilisateur SSH (ex. `raouf`).
+   - **VM_SSH_KEY** : coller la clé privée qui permet de se connecter en `ssh <VM_USER>@<VM_HOST>` (même format OpenSSH, multi‑ligne). Si vous avez généré une nouvelle clé pour la VM, utilisez celle‑ci.
+3. Enregistrer. Le prochain push sur `main` utilisera les nouvelles valeurs.
 
 ### Format de la clé privée
 
@@ -247,7 +258,7 @@ Une fois le déploiement terminé, vérifiez :
    Doit retourner du HTML.
 
 4. **Accès depuis l'extérieur :**
-   - Ouvrez http://35.223.190.104 dans votre navigateur
+   - Ouvrez http://34.46.198.22 dans votre navigateur
    - Le dashboard doit s'afficher avec les données de la base PostgreSQL
 
 ## Notes importantes

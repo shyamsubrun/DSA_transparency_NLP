@@ -117,6 +117,6 @@ echo "Pour voir les logs en temps réel:"
 echo "  podman-compose logs -f"
 echo ""
 echo "Pour tester depuis l'extérieur:"
-echo "  curl http://35.223.190.104/api/health"
-echo "  curl http://35.223.190.104"
+echo "  curl http://34.46.198.22/api/health"
+echo "  curl http://34.46.198.22"
 

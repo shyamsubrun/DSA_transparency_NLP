@@ -14,7 +14,7 @@ WARNING: nextval: reached maximum value of sequence "platforms_id_seq" (32767)
 
 ```bash
 # Copier le fichier de correction sur la VM
-scp database/fix_sequence_limits.sql raouf.abdallah@35.223.190.104:~/
+scp database/fix_sequence_limits.sql raouf@34.46.198.22:~/
 
 # Sur la VM, appliquer la correction
 sudo -u postgres psql -d dsa < ~/fix_sequence_limits.sql

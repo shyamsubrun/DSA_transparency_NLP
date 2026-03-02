@@ -41,10 +41,10 @@ Créer une table optimisée `moderation_entries` à partir de `dsa_decisions`, a
 
 ```bash
 # Copier le fichier de schéma
-scp database/create_optimized_schema.sql raouf.abdallah@35.223.190.104:~/
+scp database/create_optimized_schema.sql raouf@34.46.198.22:~/
 
 # Copier le fichier de triggers (après l'avoir créé)
-scp database/add_sync_triggers.sql raouf.abdallah@35.223.190.104:~/
+scp database/add_sync_triggers.sql raouf@34.46.198.22:~/
 ```
 
 ---
@@ -52,7 +52,7 @@ scp database/add_sync_triggers.sql raouf.abdallah@35.223.190.104:~/
 ## 🚀 ÉTAPE 3 : Se Connecter à la VM
 
 ```bash
-ssh raouf.abdallah@35.223.190.104
+ssh raouf@34.46.198.22
 ```
 
 ---

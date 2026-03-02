@@ -17,7 +17,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration par défaut
-DB_HOST="${DB_HOST:-35.223.190.104}"
+DB_HOST="${DB_HOST:-34.46.198.22}"
 DB_PORT="${DB_PORT:-5432}"
 DB_NAME="${DB_NAME:-dsa}"
 DB_USER="${DB_USER:-dsa_admin}"

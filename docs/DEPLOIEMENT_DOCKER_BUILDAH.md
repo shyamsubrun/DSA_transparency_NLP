@@ -165,7 +165,7 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - DATABASE_URL=postgresql://dsa_admin:Mohamed2025!@35.223.190.104:5432/dsa
+      - DATABASE_URL=postgresql://dsa_admin:Mohamed2025!@34.46.198.22:5432/dsa
       - NODE_ENV=production
       - PORT=3001
     networks:
@@ -256,7 +256,7 @@ src/data/dsa-download/
 
 ```bash
 # Se connecter à la VM
-ssh raouf.abdallah@35.223.190.104
+ssh raouf@34.46.198.22
 
 # Installer Buildah et Podman (si pas déjà installé)
 sudo yum install -y buildah podman podman-compose
@@ -314,7 +314,7 @@ podman-compose ps
 
 ```env
 # Backend
-DATABASE_URL=postgresql://dsa_admin:Mohamed2025!@35.223.190.104:5432/dsa
+DATABASE_URL=postgresql://dsa_admin:Mohamed2025!@34.46.198.22:5432/dsa
 NODE_ENV=production
 PORT=3001
 
@@ -332,7 +332,7 @@ podman-compose up -d
 
 # Ou avec podman directement
 podman run -d --name dsa-backend -p 3001:3001 \
-  -e DATABASE_URL="postgresql://dsa_admin:Mohamed2025!@35.223.190.104:5432/dsa" \
+  -e DATABASE_URL="postgresql://dsa_admin:Mohamed2025!@34.46.198.22:5432/dsa" \
   dsa-backend:latest
 
 podman run -d --name dsa-frontend -p 80:80 dsa-frontend:latest
@@ -380,7 +380,7 @@ podman ps
 curl http://localhost:3001/api/filters
 
 # Tester le frontend (depuis votre machine locale)
-curl http://35.223.190.104
+curl http://34.46.198.22
 
 # Vérifier les logs pour erreurs
 podman-compose logs backend | grep -i error
@@ -415,8 +415,8 @@ set -e
 echo "🚀 Déploiement DSA Dashboard sur VM"
 
 # Variables
-VM_USER="raouf.abdallah"
-VM_HOST="35.223.190.104"
+VM_USER="raouf"
+VM_HOST="34.46.198.22"
 REPO_DIR="~/dsa-dashboard"
 
 echo "📦 Build et push des images..."
@@ -446,7 +446,7 @@ podman-compose ps
 ENDSSH
 
 echo "🎉 Dashboard déployé avec succès !"
-echo "📊 Accéder au dashboard : http://35.223.190.104"
+echo "📊 Accéder au dashboard : http://34.46.198.22"
 ```
 
 ### 6.2 Utilisation
@@ -509,7 +509,7 @@ podman-compose logs -f
 - [ ] Repo cloné sur la VM
 - [ ] Images buildées avec Buildah : `buildah bud`
 - [ ] Services démarrés avec `podman-compose up -d`
-- [ ] Dashboard accessible depuis http://35.223.190.104
+- [ ] Dashboard accessible depuis http://34.46.198.22
 - [ ] Backend répond aux requêtes API
 - [ ] PostgreSQL accessible depuis les containers
 

@@ -92,7 +92,7 @@ def main():
     parser = argparse.ArgumentParser(
         description='Vérifie la complétude des données pour le dashboard DSA'
     )
-    parser.add_argument('-H', '--host', default=os.getenv('DB_HOST', '35.223.190.104'),
+    parser.add_argument('-H', '--host', default=os.getenv('DB_HOST', '34.46.198.22'),
                         help='Host PostgreSQL')
     parser.add_argument('-p', '--port', type=int, default=int(os.getenv('DB_PORT', '5432')),
                         help='Port PostgreSQL')

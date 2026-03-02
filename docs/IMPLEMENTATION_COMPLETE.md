@@ -173,7 +173,7 @@ Tous les éléments du plan ont été implémentés avec succès.
    ```
 
 3. **Accéder**
-   - http://35.223.190.104
+   - http://34.46.198.22
 
 ---
 
@@ -183,7 +183,7 @@ Tous les éléments du plan ont été implémentés avec succès.
 Le mot de passe PostgreSQL "Mohamed2025!" dans le plan peut nécessiter une vérification. 
 Pour tester la connexion :
 ```bash
-psql -h 35.223.190.104 -U dsa_admin -d dsa
+psql -h 34.46.198.22 -U dsa_admin -d dsa
 ```
 
 ### 2. Variables d'Environnement
@@ -196,7 +196,7 @@ VITE_API_BASE_URL=http://localhost:3001/api
 
 **`backend/.env` (backend):**
 ```env
-DATABASE_URL="postgresql://dsa_admin:PASSWORD@35.223.190.104:5432/dsa"
+DATABASE_URL="postgresql://dsa_admin:PASSWORD@34.46.198.22:5432/dsa"
 PORT=3001
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173

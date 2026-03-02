@@ -5,14 +5,14 @@
 ### 1. Copier les fichiers sur la VM
 
 ```bash
-scp database/create_optimized_schema.sql raouf.abdallah@35.223.190.104:~/
-scp database/add_sync_triggers.sql raouf.abdallah@35.223.190.104:~/
+scp database/create_optimized_schema.sql raouf@34.46.198.22:~/
+scp database/add_sync_triggers.sql raouf@34.46.198.22:~/
 ```
 
 ### 2. Se connecter à la VM
 
 ```bash
-ssh raouf.abdallah@35.223.190.104
+ssh raouf@34.46.198.22
 ```
 
 ### 3. Créer le schéma optimisé

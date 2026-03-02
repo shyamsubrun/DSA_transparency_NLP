@@ -210,7 +210,7 @@ J'ai créé un script SQL complet qui fait toutes les vérifications d'un coup :
 
 ```bash
 # Copier le script sur la VM
-scp database/verify_setup.sql raouf.abdallah@35.223.190.104:~/
+scp database/verify_setup.sql raouf@34.46.198.22:~/
 
 # Sur la VM, exécuter
 sudo -u postgres psql -d dsa < ~/verify_setup.sql

@@ -4,8 +4,8 @@ Ce guide détaille les étapes pour déployer le dashboard DSA sur la VM cloud o
 
 ## Vue d'ensemble
 
-- **VM**: 35.223.190.104
-- **Utilisateur**: raouf.abdallah
+- **VM**: 34.46.198.22
+- **Utilisateur**: raouf
 - **Base de données**: PostgreSQL (localhost:5432)
 - **Container runtime**: Buildah/Podman
 - **Repository**: https://github.com/raouf-rak/dsa-dashboard.git
@@ -22,10 +22,10 @@ Ce guide détaille les étapes pour déployer le dashboard DSA sur la VM cloud o
 
 ```bash
 # Se connecter à la VM
-ssh raouf.abdallah@35.223.190.104
+ssh raouf@34.46.198.22
 
 # Ou avec une clé SSH
-ssh -i ~/.ssh/votre_cle_privée raouf.abdallah@35.223.190.104
+ssh -i ~/.ssh/votre_cle_privée raouf@34.46.198.22
 ```
 
 ### 1.2 Vérifier PostgreSQL
@@ -105,7 +105,7 @@ cat > .env.production << EOF
 DATABASE_URL=postgresql://dsa_admin:Mohamed2025!@localhost:5432/dsa
 NODE_ENV=production
 PORT=3001
-FRONTEND_URL=http://35.223.190.104
+FRONTEND_URL=http://34.46.198.22
 EOF
 
 # Vérifier le contenu
@@ -204,13 +204,13 @@ Ce script vérifie automatiquement :
 
 ```bash
 # Vérifier le backend
-curl http://35.223.190.104/api/health
+curl http://34.46.198.22/api/health
 
 # Vérifier le frontend
-curl http://35.223.190.104
+curl http://34.46.198.22
 
 # Ouvrir dans le navigateur
-# http://35.223.190.104
+# http://34.46.198.22
 ```
 
 ### 5.2 Vérifier les règles firewall GCP
@@ -299,7 +299,7 @@ Utilisez le script `deploy.sh` :
 
 ```bash
 # Depuis la racine du projet
-bash deploy.sh raouf.abdallah 35.223.190.104
+bash deploy.sh raouf 34.46.198.22
 ```
 
 Ce script :
@@ -420,7 +420,7 @@ podman exec dsa-backend sh -c "node -e \"require('@prisma/client').PrismaClient(
    - Ajouter une ligne dans `pg_hba.conf` pour autoriser les connexions depuis le réseau Docker/Podman
 
 4. **Utiliser l'IP de la VM** :
-   - Modifier `DATABASE_URL` pour utiliser `35.223.190.104` au lieu de `localhost` ou `host.docker.internal`
+   - Modifier `DATABASE_URL` pour utiliser `34.46.198.22` au lieu de `localhost` ou `host.docker.internal`
 
 ### Port 80 déjà utilisé
 

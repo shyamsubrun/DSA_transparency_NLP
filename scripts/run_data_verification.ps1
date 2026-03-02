@@ -6,7 +6,7 @@
 # ============================================================================
 
 param(
-    [string]$DbHost = $(if ($env:DB_HOST) { $env:DB_HOST } else { "35.223.190.104" }),
+    [string]$DbHost = $(if ($env:DB_HOST) { $env:DB_HOST } else { "34.46.198.22" }),
     [int]$Port = $(if ($env:DB_PORT) { [int]$env:DB_PORT } else { 5432 }),
     [string]$Database = $(if ($env:DB_NAME) { $env:DB_NAME } else { "dsa" }),
     [string]$User = $(if ($env:DB_USER) { $env:DB_USER } else { "dsa_admin" }),

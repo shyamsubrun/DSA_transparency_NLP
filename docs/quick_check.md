@@ -28,7 +28,7 @@ ps aux | grep postgres
 
 ```bash
 # Se connecter à PostgreSQL
-psql -h 35.223.190.104 -p 5432 -U dsa_admin -d dsa
+psql -h 34.46.198.22 -p 5432 -U dsa_admin -d dsa
 
 # Mot de passe: Mohamed2025!
 ```

@@ -2,7 +2,7 @@
 
 ## Problème
 ```
-psql: error: /home/raouf.abdallah/create_optimized_schema.sql: Permission denied
+psql: error: /home/raouf/create_optimized_schema.sql: Permission denied
 ```
 
 ## Solution 1 : Lire le fichier et l'exécuter via stdin (RECOMMANDÉ)
