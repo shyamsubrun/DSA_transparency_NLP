@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import type { ModerationEntry, KPIStats } from '../data/types';
+import { getEffectiveMockVolumeScale, scaleMockAggregations } from '../data/mockVolumeScale';
 import { useModerationData, useModerationStats } from './useModeration';
 
 export function useFilteredData() {
@@ -174,7 +175,7 @@ export function useFilteredData() {
       platforms: Record<string, number>;
     }>);
 
-    return {
+    const raw = {
       byPlatform,
       byCategory,
       byDecisionType,
@@ -190,8 +191,11 @@ export function useFilteredData() {
       groundsAnalysis,
       categoryByGround,
       automationHeatmap,
-      countryDetails
+      countryDetails,
     };
+
+    const vol = getEffectiveMockVolumeScale();
+    return scaleMockAggregations(raw, vol) as typeof raw;
   }, [filteredData]);
 
   return {
@@ -204,17 +208,18 @@ export function useFilteredData() {
   };
 }
 
-// Helper hook to get time series data
-export function useTimeSeriesData(data: ModerationEntry[]) {
+// Helper hook to get time series data (volumeScale aligns counts with VITE_MOCK_TARGET_TOTAL in mock mode)
+export function useTimeSeriesData(data: ModerationEntry[], volumeScale = 1) {
   return useMemo(() => {
-    // Group by month for cleaner visualization
+    const s = volumeScale;
+    const scale = (n: number) => (s === 1 ? n : Math.round(n * s));
+
     const byMonth = data.reduce((acc, d) => {
       const month = d.application_date.substring(0, 7); // YYYY-MM
       acc[month] = (acc[month] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
-    // By platform and month
     const byPlatformMonth = data.reduce((acc, d) => {
       const month = d.application_date.substring(0, 7);
       if (!acc[d.platform_name]) acc[d.platform_name] = {};
@@ -222,7 +227,6 @@ export function useTimeSeriesData(data: ModerationEntry[]) {
       return acc;
     }, {} as Record<string, Record<string, number>>);
 
-    // Average delay by month
     const delayByMonth = data.reduce((acc, d) => {
       if (d.delay_days === null) return acc;
       const month = d.application_date.substring(0, 7);
@@ -235,12 +239,29 @@ export function useTimeSeriesData(data: ModerationEntry[]) {
     const months = Object.keys(byMonth).sort();
     const platforms = [...new Set(data.map(d => d.platform_name))];
 
+    const byMonthScaled: Record<string, number> = {};
+    for (const m of months) byMonthScaled[m] = scale(byMonth[m] || 0);
+
+    const byPlatformMonthScaled: Record<string, Record<string, number>> = {};
+    for (const p of Object.keys(byPlatformMonth)) {
+      byPlatformMonthScaled[p] = {};
+      for (const m of Object.keys(byPlatformMonth[p])) {
+        byPlatformMonthScaled[p][m] = scale(byPlatformMonth[p][m] || 0);
+      }
+    }
+
+    const delayByMonthScaled: Record<string, { total: number; count: number }> = {};
+    for (const m of Object.keys(delayByMonth)) {
+      const d = delayByMonth[m];
+      delayByMonthScaled[m] = { total: scale(d.total), count: scale(d.count) };
+    }
+
     return {
       months,
       platforms,
-      byMonth,
-      byPlatformMonth,
-      delayByMonth
+      byMonth: byMonthScaled,
+      byPlatformMonth: byPlatformMonthScaled,
+      delayByMonth: delayByMonthScaled,
     };
-  }, [data]);
+  }, [data, volumeScale]);
 }

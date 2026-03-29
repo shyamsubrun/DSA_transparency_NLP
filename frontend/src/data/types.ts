@@ -27,15 +27,23 @@ export interface KPIStats {
   countryCount: number;
 }
 
+/** Aligné sur le pipeline décrit dans le rapport (15 plateformes filtrées). */
 export const PLATFORMS = [
-  'Meta',
   'TikTok',
-  'X',
+  'Instagram',
+  'Facebook',
   'YouTube',
-  'LinkedIn',
+  'X',
+  'Pornhub',
+  'XNXX',
+  'XVideos',
   'Snapchat',
-  'Pinterest',
-  'Amazon'
+  'Reddit',
+  'LinkedIn',
+  'Amazon Store',
+  'AliExpress',
+  'Temu',
+  'Shein',
 ] as const;
 
 export const CATEGORIES = [

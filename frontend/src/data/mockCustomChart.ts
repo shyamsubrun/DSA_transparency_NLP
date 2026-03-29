@@ -2,6 +2,7 @@ import type { ModerationEntry } from './types';
 import type { ChartAggregationPlan } from './chartPlanTypes';
 import { buildChartOptionFromRows } from '../utils/chartFromRows';
 import type { CustomChartResponse } from './chartPlanTypes';
+import { getMockVolumeScale } from './mockData';
 
 function getDimensionValue(entry: ModerationEntry, dim: ChartAggregationPlan['primaryDimension']): string {
   switch (dim) {
@@ -112,6 +113,14 @@ export function aggregateMockEntries(
         return Number(b.value) - Number(a.value);
       });
     }
+  }
+
+  const volScale = getMockVolumeScale();
+  if (volScale !== 1 && plan.metric !== 'avg_delay_days') {
+    rows = rows.map((r) => ({
+      ...r,
+      value: Math.round(Number(r.value) * volScale),
+    }));
   }
 
   return rows;

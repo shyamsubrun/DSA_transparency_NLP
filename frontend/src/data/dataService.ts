@@ -6,6 +6,10 @@
 //
 // To switch modes, change the USE_MOCK_DATA constant below.
 //
+// Mock volume (optional): VITE_MOCK_DATA_SIZE = sample row count (max 200k in mockData.ts).
+// To align KPI/charts with a target total (e.g. ~17M rows in the report) without loading
+// 17M objects in the browser, set VITE_MOCK_TARGET_TOTAL=17000000 (or VITE_MOCK_VOLUME_SCALE).
+//
 import type { ModerationEntry } from './types';
 import type { ChartPlanApiResponse, CustomChartResponse } from './chartPlanTypes';
 import {

@@ -1,4 +1,5 @@
 import { TrendingUp } from 'lucide-react';
+import { getEffectiveMockVolumeScale } from '../../data/mockVolumeScale';
 import { useFilteredData, useTimeSeriesData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
 import { useScreenSize } from '../../hooks/useScreenSize';
@@ -7,7 +8,7 @@ import styles from './Section.module.css';
 
 export function TimeSeriesSection() {
   const { data } = useFilteredData();
-  const timeSeries = useTimeSeriesData(data);
+  const timeSeries = useTimeSeriesData(data, getEffectiveMockVolumeScale());
   const screenSize = useScreenSize();
 
   // Line chart: Total actions over time

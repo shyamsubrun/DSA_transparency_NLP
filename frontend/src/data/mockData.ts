@@ -18,6 +18,24 @@ function parseMockDataSize(): number {
 
 export const MOCK_DATA_SIZE = parseMockDataSize();
 
+/**
+ * Facteur pour afficher des volumes type import PostgreSQL (~17M lignes) sans générer
+ * autant d'objets en mémoire : on garde MOCK_DATA_SIZE lignes réelles et on multiplie les comptages.
+ * Définir VITE_MOCK_TARGET_TOTAL=17000000 ou VITE_MOCK_VOLUME_SCALE explicite.
+ */
+export function getMockVolumeScale(): number {
+  const explicit = import.meta.env.VITE_MOCK_VOLUME_SCALE;
+  if (explicit !== undefined && explicit !== '') {
+    const s = parseFloat(String(explicit));
+    if (Number.isFinite(s) && s > 0) return s;
+  }
+  const raw = import.meta.env.VITE_MOCK_TARGET_TOTAL;
+  if (raw === undefined || raw === '') return 1;
+  const target = parseInt(String(raw), 10);
+  if (!Number.isFinite(target) || target < 1) return 1;
+  return target / MOCK_DATA_SIZE;
+}
+
 /** Pick index using weights (same length as items). Heavier = more frequent. */
 function weightedPickIndex(weights: readonly number[]): number {
   const total = weights.reduce((a, b) => a + b, 0);
@@ -34,18 +52,24 @@ function weightedPick<T>(items: readonly T[], weights: readonly number[]): T {
 }
 
 /**
- * Platform shares (order = PLATFORMS): tier-1 social/video, mid-tier networks, tail incl. e-commerce.
- * Weights sum ~100 for easy mental model; not uniform.
+ * Platform shares (order = PLATFORMS). Somme = 100. Réseaux majeurs + e-commerce + taille NSFW modérée.
  */
 const PLATFORM_WEIGHTS: readonly number[] = [
-  22, // Meta
-  20, // TikTok
-  18, // YouTube
-  12, // X
-  10, // LinkedIn
-  8, // Snapchat
-  6, // Pinterest
-  4, // Amazon
+  16, // TikTok
+  12, // Instagram
+  12, // Facebook
+  13, // YouTube
+  8, // X
+  5, // Pornhub
+  3, // XNXX
+  3, // XVideos
+  6, // Snapchat
+  7, // Reddit
+  5, // LinkedIn
+  4, // Amazon Store
+  3, // AliExpress
+  2, // Temu
+  2, // Shein
 ];
 
 /** Categories: common policy areas vs rarer severities (order = CATEGORIES). */
@@ -73,8 +97,8 @@ const EU_COUNTRY_WEIGHTS: readonly number[] = [
   14, 12, 10, 9, 7, 5, 4, // LT SI LV EE CY LU MT
 ];
 
-/** Per-platform multipliers on EU_COUNTRY_WEIGHTS so country ∋ platform is plausible (e.g. Amazon → large economies). */
-function countryWeightsForPlatform(platformIndex: number): number[] {
+/** Per-platform multipliers on EU_COUNTRY_WEIGHTS (pays cohérents avec la plateforme). */
+function countryWeightsForPlatform(platformName: string): number[] {
   const w = EU_COUNTRY_WEIGHTS.map((v) => v);
   const mul = (indices: readonly number[], factor: number) => {
     for (const i of indices) {
@@ -82,35 +106,45 @@ function countryWeightsForPlatform(platformIndex: number): number[] {
     }
   };
 
-  switch (platformIndex) {
-    case 0: // Meta — broad footprint; slight lift big five
+  switch (platformName) {
+    case 'Facebook':
+    case 'Instagram':
       mul([0, 1, 2, 3, 4], 1.12);
       mul([25, 26], 0.78);
       break;
-    case 1: // TikTok — strong southern + CEE youth skew
+    case 'TikTok':
       mul([3, 2, 1, 5, 11, 10, 12], 1.2);
       mul([25, 26], 0.8);
       break;
-    case 2: // X — news / urban languages
+    case 'X':
+    case 'Reddit':
       mul([1, 0, 3, 2, 18], 1.18);
       break;
-    case 3: // YouTube — very broad; lift top markets slightly
+    case 'YouTube':
       mul([0, 1, 2, 3, 4], 1.1);
       break;
-    case 4: // LinkedIn — IE + Benelux + Nordics + DE/FR professional hubs
+    case 'LinkedIn':
       mul([18, 6, 0, 1, 15, 11, 16, 7], 1.32);
       mul([25, 26, 24], 0.75);
       break;
-    case 5: // Snapchat — younger skew Nordics / Benelux
+    case 'Snapchat':
       mul([11, 6, 7, 15, 16, 17], 1.22);
       break;
-    case 6: // Pinterest — DE/FR/IT core EU shopping
-      mul([0, 1, 2, 3], 1.18);
-      mul([22, 23, 26], 0.85);
+    case 'Pornhub':
+    case 'XNXX':
+    case 'XVideos':
+      mul([0, 1, 2, 3, 4], 1.08);
+      mul([5, 10, 12, 11], 1.08);
       break;
-    case 7: // Amazon — e-commerce volume in largest economies
+    case 'Amazon Store':
       mul([0, 1, 2, 3, 4], 1.42);
       mul([20, 21, 22, 23, 24, 25, 26], 0.72);
+      break;
+    case 'AliExpress':
+    case 'Temu':
+    case 'Shein':
+      mul([0, 1, 2, 3, 4], 1.22);
+      mul([5, 10, 4, 7], 1.12);
       break;
     default:
       break;
@@ -119,8 +153,8 @@ function countryWeightsForPlatform(platformIndex: number): number[] {
   return w;
 }
 
-function pickCountryForPlatform(platformIndex: number) {
-  return EU_COUNTRIES[weightedPickIndex(countryWeightsForPlatform(platformIndex))];
+function pickCountryForPlatform(platformName: string) {
+  return EU_COUNTRIES[weightedPickIndex(countryWeightsForPlatform(platformName))];
 }
 
 // Generate a random date within a range
@@ -167,7 +201,8 @@ function generateMockEntry(id: number): ModerationEntry {
     (applicationDate.getTime() - new Date(contentDateStr).getTime()) / (1000 * 60 * 60 * 24),
   );
   const ci = CATEGORIES.indexOf(category);
-  const platformScale = 0.42 + ((pi + 5) % 8) * 0.11 + Math.random() * 0.38;
+  const platformScale =
+    0.42 + ((pi + 5) % PLATFORMS.length) * 0.065 + Math.random() * 0.38;
   const categoryScale = 0.38 + ((ci + 3) % 12) * 0.07 + Math.random() * 0.42;
   const jitterDays = (Math.random() - 0.5) * 110;
   const delayDays = Math.max(
@@ -175,7 +210,7 @@ function generateMockEntry(id: number): ModerationEntry {
     Math.min(850, Math.round(baseDelayDays * platformScale * categoryScale + jitterDays)),
   );
 
-  const countryEntry = pickCountryForPlatform(pi);
+  const countryEntry = pickCountryForPlatform(platform_name);
   const scopeCount = Math.floor(Math.random() * 5) + 1;
 
   return {
@@ -288,13 +323,22 @@ function calculateStats(entries: ModerationEntry[]): KPIStats {
   const automatedDetectionCount = entries.filter(e => e.automated_detection).length;
   const automatedDecisionCount = entries.filter(e => e.automated_decision).length;
 
+  const volScale = getMockVolumeScale();
+  const scaledTotal = Math.round(totalActions * volScale);
+
   return {
-    totalActions,
+    totalActions: scaledTotal,
     platformCount: platforms.size,
     averageDelay: Math.round(averageDelay * 10) / 10,
-    automatedDetectionRate: totalActions > 0 ? Math.round((automatedDetectionCount / totalActions) * 100 * 10) / 10 : 0,
-    automatedDecisionRate: totalActions > 0 ? Math.round((automatedDecisionCount / totalActions) * 100 * 10) / 10 : 0,
-    countryCount: countries.size
+    automatedDetectionRate:
+      totalActions > 0
+        ? Math.round((automatedDetectionCount / totalActions) * 100 * 10) / 10
+        : 0,
+    automatedDecisionRate:
+      totalActions > 0
+        ? Math.round((automatedDecisionCount / totalActions) * 100 * 10) / 10
+        : 0,
+    countryCount: countries.size,
   };
 }
 
