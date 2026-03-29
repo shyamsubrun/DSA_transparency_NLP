@@ -3,14 +3,17 @@ import type { ModerationEntry, KPIStats } from './types';
 import type { FilterOptions, FetchEntriesResponse } from './dataService';
 import { PLATFORMS, CATEGORIES, DECISION_TYPES, DECISION_GROUNDS, CONTENT_TYPES, EU_COUNTRIES } from './types';
 
-/** Number of synthetic rows (Vite bake). Default 5000; clamp 500–50000. */
+const MIN_MOCK_ROWS = 500;
+const MAX_MOCK_ROWS = 200_000;
+
+/** Number of synthetic rows (Vite bake). Default 5000; clamp MIN–MAX (see MAX_MOCK_ROWS). */
 function parseMockDataSize(): number {
   const raw = import.meta.env.VITE_MOCK_DATA_SIZE;
   const fallback = 5000;
   if (raw === undefined || raw === '') return fallback;
   const n = parseInt(String(raw), 10);
   if (!Number.isFinite(n)) return fallback;
-  return Math.min(50_000, Math.max(500, n));
+  return Math.min(MAX_MOCK_ROWS, Math.max(MIN_MOCK_ROWS, n));
 }
 
 export const MOCK_DATA_SIZE = parseMockDataSize();
@@ -31,18 +34,18 @@ function weightedPick<T>(items: readonly T[], weights: readonly number[]): T {
 }
 
 /**
- * Platform shares (order = PLATFORMS): large networks dominate; niche / e-commerce tail.
- * Not uniform — charts show realistic imbalance.
+ * Platform shares (order = PLATFORMS): tier-1 social/video, mid-tier networks, tail incl. e-commerce.
+ * Weights sum ~100 for easy mental model; not uniform.
  */
 const PLATFORM_WEIGHTS: readonly number[] = [
-  26, // Meta
+  22, // Meta
   20, // TikTok
-  11, // X
-  24, // YouTube
-  7, // LinkedIn
-  6, // Snapchat
-  4, // Pinterest
-  2, // Amazon
+  18, // YouTube
+  12, // X
+  10, // LinkedIn
+  8, // Snapchat
+  6, // Pinterest
+  4, // Amazon
 ];
 
 /** Categories: common policy areas vs rarer severities (order = CATEGORIES). */
@@ -59,13 +62,66 @@ const CONTENT_TYPE_WEIGHTS: readonly number[] = [20, 22, 18, 7, 9, 4];
 /** Grounds: ToS / illegal content more often than niche legal bases (order = DECISION_GROUNDS). */
 const DECISION_GROUND_WEIGHTS: readonly number[] = [22, 24, 8, 6, 10, 7, 9, 8, 14, 12];
 
-/** EU countries by index in EU_COUNTRIES: larger MS weight more than small MS. */
-const EU_COUNTRY_WEIGHTS: readonly number[] = EU_COUNTRIES.map((_, i) => {
-  if (i < 5) return 14 - Math.floor(i * 0.5); // DE FR IT ES PL
-  if (i < 12) return 6;
-  if (i < 20) return 4;
-  return 2;
-});
+/**
+ * EU MS base weights (same order as EU_COUNTRIES): population / market-size–inspired spread,
+ * not flat — big five + gradual tail so maps and country charts stay readable.
+ */
+const EU_COUNTRY_WEIGHTS: readonly number[] = [
+  200, 175, 160, 140, 125, // DE FR IT ES PL
+  58, 48, 42, 40, 38, 36, 34, 32, // RO NL BE GR CZ PT SE HU
+  28, 24, 22, 21, 20, 22, 18, // AT BG DK FI SK IE HR
+  14, 12, 10, 9, 7, 5, 4, // LT SI LV EE CY LU MT
+];
+
+/** Per-platform multipliers on EU_COUNTRY_WEIGHTS so country ∋ platform is plausible (e.g. Amazon → large economies). */
+function countryWeightsForPlatform(platformIndex: number): number[] {
+  const w = EU_COUNTRY_WEIGHTS.map((v) => v);
+  const mul = (indices: readonly number[], factor: number) => {
+    for (const i of indices) {
+      if (i >= 0 && i < w.length) w[i] *= factor;
+    }
+  };
+
+  switch (platformIndex) {
+    case 0: // Meta — broad footprint; slight lift big five
+      mul([0, 1, 2, 3, 4], 1.12);
+      mul([25, 26], 0.78);
+      break;
+    case 1: // TikTok — strong southern + CEE youth skew
+      mul([3, 2, 1, 5, 11, 10, 12], 1.2);
+      mul([25, 26], 0.8);
+      break;
+    case 2: // X — news / urban languages
+      mul([1, 0, 3, 2, 18], 1.18);
+      break;
+    case 3: // YouTube — very broad; lift top markets slightly
+      mul([0, 1, 2, 3, 4], 1.1);
+      break;
+    case 4: // LinkedIn — IE + Benelux + Nordics + DE/FR professional hubs
+      mul([18, 6, 0, 1, 15, 11, 16, 7], 1.32);
+      mul([25, 26, 24], 0.75);
+      break;
+    case 5: // Snapchat — younger skew Nordics / Benelux
+      mul([11, 6, 7, 15, 16, 17], 1.22);
+      break;
+    case 6: // Pinterest — DE/FR/IT core EU shopping
+      mul([0, 1, 2, 3], 1.18);
+      mul([22, 23, 26], 0.85);
+      break;
+    case 7: // Amazon — e-commerce volume in largest economies
+      mul([0, 1, 2, 3, 4], 1.42);
+      mul([20, 21, 22, 23, 24, 25, 26], 0.72);
+      break;
+    default:
+      break;
+  }
+
+  return w;
+}
+
+function pickCountryForPlatform(platformIndex: number) {
+  return EU_COUNTRIES[weightedPickIndex(countryWeightsForPlatform(platformIndex))];
+}
 
 // Generate a random date within a range
 function randomDate(start: Date, end: Date): string {
@@ -83,7 +139,8 @@ function getMockDateWindow(): { start: Date; end: Date } {
   return { start, end };
 }
 
-function randomCountryEntry() {
+/** Country from global EU distribution (territorial_scope extras, etc.). */
+function randomCountryEntryGlobal() {
   return EU_COUNTRIES[weightedPickIndex(EU_COUNTRY_WEIGHTS)];
 }
 
@@ -91,7 +148,7 @@ function randomCountryEntry() {
 function randomCountries(primaryCode: string, count: number = 3): string[] {
   const codes = new Set<string>([primaryCode]);
   while (codes.size < Math.min(count, EU_COUNTRIES.length)) {
-    codes.add(randomCountryEntry().code);
+    codes.add(randomCountryEntryGlobal().code);
   }
   return [...codes];
 }
@@ -99,6 +156,7 @@ function randomCountries(primaryCode: string, count: number = 3): string[] {
 // Generate a single mock moderation entry
 function generateMockEntry(id: number): ModerationEntry {
   const platform_name = weightedPick(PLATFORMS, PLATFORM_WEIGHTS);
+  const pi = PLATFORMS.indexOf(platform_name);
   const category = weightedPick(CATEGORIES, CATEGORY_WEIGHTS);
 
   const { start: windowStart, end: windowEnd } = getMockDateWindow();
@@ -108,8 +166,6 @@ function generateMockEntry(id: number): ModerationEntry {
   const baseDelayDays = Math.floor(
     (applicationDate.getTime() - new Date(contentDateStr).getTime()) / (1000 * 60 * 60 * 24),
   );
-
-  const pi = PLATFORMS.indexOf(platform_name);
   const ci = CATEGORIES.indexOf(category);
   const platformScale = 0.42 + ((pi + 5) % 8) * 0.11 + Math.random() * 0.38;
   const categoryScale = 0.38 + ((ci + 3) % 12) * 0.07 + Math.random() * 0.42;
@@ -119,7 +175,7 @@ function generateMockEntry(id: number): ModerationEntry {
     Math.min(850, Math.round(baseDelayDays * platformScale * categoryScale + jitterDays)),
   );
 
-  const countryEntry = randomCountryEntry();
+  const countryEntry = pickCountryForPlatform(pi);
   const scopeCount = Math.floor(Math.random() * 5) + 1;
 
   return {

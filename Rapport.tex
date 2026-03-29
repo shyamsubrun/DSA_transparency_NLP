@@ -1,0 +1,1508 @@
+\documentclass[10pt,twocolumn,a4paper]{article}
+
+% Packages essentiels
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{url}
+\usepackage{tikz}
+\usepackage{geometry}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{abstract}
+\usepackage{footnote}
+\usepackage{tcolorbox}
+\usepackage{tabularx}
+\usepackage{array}
+\usetikzlibrary{shapes,arrows,positioning}
+
+% Configuration de la page style IEEE
+\geometry{top=2cm, bottom=2cm, left=1.5cm, right=1.5cm}
+\setlength{\columnsep}{0.5cm}
+
+% Style des titres de section (style IEEE)
+\titleformat{\section}{\normalfont\Large\bfseries\centering}{\Roman{section}.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\Alph{subsection}.}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\itshape}{\arabic{subsubsection})}{0.5em}{}
+
+% Configuration des listings pour le code
+\lstset{
+    basicstyle=\ttfamily\scriptsize,
+    breaklines=true,
+    frame=single,
+    language=SQL,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    showstringspaces=false
+}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+% Style abstract
+\renewcommand{\abstractnamefont}{\normalfont\bfseries}
+\renewcommand{\abstracttextfont}{\normalfont\small\itshape}
+
+\begin{document}
+
+%%% PAGE TITRE
+\title{\LARGE\bfseries Plateforme d'Analyse à Interface et Visualisation Graphiques de la Base de Données de la DSA Transparency \\[0.3cm]
+\large Rapport Technique}
+
+\author{
+\textbf{ABDALLAH Abderraouf, GADEWA Emmanuel, KATTAN Mohamad,}\\
+\textbf{NABET Ibtissam, SUBRUN Shyam}\\[0.2cm]
+Université Paris-Est Créteil (UPEC)
+}
+
+\date{}
+
+\twocolumn[
+\maketitle
+\begin{@twocolumnfalse}
+\begin{abstract}
+Ce rapport technique présente le développement d'une plateforme d'analyse à interface et visualisation graphiques de la base de données de la DSA transparency, base de données réglementaire contenant plus de 11 milliards de décisions de modération des très grandes plateformes de réseaux sociaux en ligne européennes. Notre solution propose une architecture trois-tiers moderne (React/Express/PostgreSQL) permettant aux chercheurs en droit du numérique d'explorer ces données massives sans compétences en programmation. Nous analysons les défis liés aux paramètres 3V des mégadonnées\footnote{Les \textbf{paramètres 3V} désignent les trois caractéristiques fondamentales des mégadonnées, formalisées par Doug Laney en 2001 \cite{laney2001} : \textbf{Volume} (quantité massive de données à stocker et traiter), \textbf{Variété} (hétérogénéité des formats, structures et sources de données), \textbf{Vitesse} (rapidité d'arrivée et de traitement des nouvelles données).} (Volume, Variété, Vitesse), présentons l'intégration de composants d'intelligence artificielle pour la prédiction des décisions de modération (98\% de précision), et documentons les performances mesurées. Un module innovant à base d'apprentissage automatique permet de prédire automatiquement le type de décision de modération à partir des caractéristiques d'une entrée, et un module de traitement automatique du langage naturel permet de formuler des requêtes analytiques sans aucune connaissance en SQL. Notre outil est utilisable sans aucune formation et permet de répondre à plusieurs cas d'utilisation concrets : chercheurs en droit du numérique, régulateurs, journalistes d'investigation, et analystes de conformité. Le système offre huit sections d'analyse interactive, des filtres dynamiques multi-critères, et des visualisations exportables conformes aux exigences du \textit{Digital Services Act}.
+\end{abstract}
+
+\noindent\textbf{Mots-clés:} DSA, \textit{Digital Services Act}, mégadonnées, modération de contenu, visualisation de données, apprentissage automatique, React, PostgreSQL
+\vspace{0.5cm}
+\end{@twocolumnfalse}
+]
+
+\section{Introduction}
+
+\subsection{Contexte réglementaire}
+
+Le \textit{Digital Services Act} (DSA) de l'Union Européenne, entré en vigueur en 2024, impose aux très grandes plateformes de réseaux sociaux en ligne (VLOPs -- \textit{Very Large Online Platforms}) une obligation de transparence sans précédent concernant leurs pratiques de modération de contenu \cite{dsa2022}. La \textbf{modération de contenu} désigne l'ensemble des processus par lesquels une plateforme numérique détecte, examine et prend des mesures à l'égard de contenus publiés par ses utilisateurs -- qu'il s'agisse de supprimer une publication, de restreindre un compte, de retirer une vidéo, ou d'apposer un avertissement -- en application de la loi ou de ses propres conditions d'utilisation. Chaque décision de modération doit être documentée via un \textit{Statement of Reasons} (SoR), alimentant la base de données de la DSA transparency accessible publiquement.
+
+Cette base de données, hébergée par la Commission Européenne à l'adresse \url{https://transparency.dsa.ec.europa.eu/}, agrège actuellement plus de \textbf{11 milliards} de décisions de modération provenant de plateformes de réseaux sociaux majeures telles que Meta (Facebook, Instagram), TikTok, YouTube, X (anciennement Twitter), LinkedIn, et Amazon.
+
+\subsection{Problématique}
+
+Depuis 2024, les grandes plateformes numériques de réseaux sociaux (Facebook, TikTok, YouTube, etc.) sont tenues par la loi européenne de justifier publiquement chaque décision de modération de contenu. Ces justifications sont centralisées dans une base de données publique contenant plus de 11 milliards d'entrées.
+
+Le problème est que cette masse de données est difficilement exploitable en l'état. Un juriste, un chercheur en sciences politiques ou un journaliste souhaitant analyser les pratiques de modération se heurte à plusieurs obstacles :
+
+\begin{itemize}
+    \item \textbf{Volume considérable} : plusieurs millions de nouvelles entrées chaque jour, représentant environ 22~Go de données quotidiennes une fois décompressées. À titre de comparaison, cela équivaut à environ 11 millions de pages de texte par jour.
+    \item \textbf{Données hétérogènes} : chaque plateforme utilise ses propres conventions pour nommer les catégories de violation, les types de décision et les bases légales invoquées.
+    \item \textbf{Mises à jour continues} : les données sont actualisées quotidiennement avec une fenêtre glissante de 6 mois.
+    \item \textbf{Absence d'outil d'analyse accessible} : l'exploitation de ces données nécessite actuellement des compétences en programmation (Python, SQL), ce qui exclut de fait la majorité des utilisateurs cibles --- juristes, chercheurs en droit du numérique, régulateurs, journalistes.
+\end{itemize}
+
+Notre projet vise à combler ce fossé en offrant une interface visuelle permettant à tout utilisateur, sans compétence technique, d'explorer, filtrer et analyser ces données de modération.
+
+\subsection{Objectifs du projet}
+
+Notre projet vise à développer un outil d'analyse « grand public » répondant aux besoins spécifiques des chercheurs en droit du numérique, avec les objectifs suivants :
+
+\begin{enumerate}
+    \item Une interface graphique web intuitive permettant l'exploration sans programmation
+    \item Des visualisations interactives : tableaux de bord, cartes géographiques, séries temporelles
+    \item Des analyses exportables aux formats PNG, CSV et PDF
+    \item Une intégration de composants d'intelligence artificielle pour l'analyse prédictive
+    \item Une mesure des performances et de l'extensibilité
+\end{enumerate}
+
+Le reste du document est organisé comme suit : la section~II présente l'analyse des données et le contexte juridique, la section~III détaille l'architecture technique, la section~IV décrit le schéma de données, la section~V présente les fonctionnalités de l'interface avec des captures d'écran, la section~VI couvre l'intégration de l'apprentissage automatique et du traitement automatique du langage naturel, la section~VII détaille les cas d'usage, la section~VIII analyse les performances et les paramètres 3V des mégadonnées, la section~IX traite les considérations RGPD, et enfin la section~X conclut avec les perspectives futures.
+
+
+\section{Analyse des Données DSA}
+
+\subsection{Structure des données source}
+
+La base de données de la DSA transparency fournit des données via une interface de programmation (API) REST au format JSON. Chaque entrée correspond à une décision de modération unique (un \textit{Statement of Reasons}) et contient les champs présentés dans le Tableau~\ref{tab:data_structure}. L'identifiant unique (\texttt{uuid}) permet de tracer chaque décision individuellement à travers le système.
+
+\begin{table}[H]
+\centering
+\caption{Structure des données DSA principales}
+\label{tab:data_structure}
+\footnotesize
+\begin{tabular}{|p{3cm}|p{5.2cm}|}
+\hline
+\textbf{Champ} & \textbf{Description et exemples} \\
+\hline
+\texttt{uuid} & Identifiant unique universel de la décision (UUID version 4). Ex: \texttt{550e8400-e29b-41d4...} \\
+\hline
+\texttt{platform\_name} & Plateforme de réseau social ayant pris la décision. Ex: TikTok, Facebook, YouTube, LinkedIn, X, Amazon \\
+\hline
+\texttt{application\_date} & Date d'application de la décision au format ISO~8601. Ex: 2025-01-15 \\
+\hline
+\texttt{content\_date} & Date de création du contenu modéré. Ex: 2024-12-20 \\
+\hline
+\texttt{category} & Catégorie de violation identifiée. Ex: ILLEGAL\_OR\_HARMFUL\_SPEECH, UNSAFE\_PRODUCTS, VIOLENCE \\
+\hline
+\texttt{decision\_ground} & Base légale ou contractuelle de la décision. Ex: \textit{Illegal content (Art.~3 DSA)}, \textit{Terms of Service violation} \\
+\hline
+\texttt{decision\_visibility} & Type de restriction de visibilité appliquée. Ex: REMOVAL, DISABLED, VISIBILITY\_RESTRICTION \\
+\hline
+\texttt{territorial\_scope} & Codes pays conformes à la norme ISO~3166-1 alpha-2 \cite{iso3166}. Ex: {[}``FR'', ``DE'', ``IT''{]} \\
+\hline
+\texttt{automated\_detection} & Détection par algorithme (\texttt{true}) ou par signalement humain (\texttt{false}) \\
+\hline
+\texttt{automated\_decision} & Niveau d'automatisation de la prise de décision. Ex: FULLY\_AUTOMATED, PARTIALLY\_AUTOMATED, NOT\_AUTOMATED \\
+\hline
+\texttt{content\_type} & Format du contenu modéré. Ex: TEXT, IMAGE, VIDEO, AUDIO, LIVE\_STREAM \\
+\hline
+\texttt{content\_language} & Code langue conforme à la norme ISO~639-1 \cite{iso639}. Ex: fr, de, en, el, nl \\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Détails sur les identifiants UUID.} L'identifiant \texttt{uuid} suit le format UUID version~4 défini par la RFC~4122 \cite{rfc4122}. Il s'agit d'une chaîne de 36 caractères (dont 4 tirets) au format \texttt{xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx}, où \texttt{x} est un chiffre hexadécimal et \texttt{y} vaut 8, 9, a ou b. Le chiffre \texttt{4} en troisième groupe indique la version actuellement en cours d'utilisation (version~4), qui génère les identifiants par tirage pseudo-aléatoire -- contrairement aux versions 1 et 2 qui utilisaient l'horodatage ou l'identifiant de la machine. Les sous-chaînes du format représentent respectivement des champs historiques issus des premières spécifications : \texttt{time\_low} (8 car.), \texttt{time\_mid} (4 car.), \texttt{time\_hi\_and\_version} (4 car., dont le premier nibble encode la version), \texttt{clock\_seq} (4 car.) et \texttt{node} (12 car.). En version~4, tous ces champs sont remplis pseudo-aléatoirement sauf les bits de version et de variante, ce qui garantit l'unicité statistique sans coordination centralisée. La probabilité de collision entre deux UUID v4 est de l'ordre de $5 \times 10^{-36}$ pour un milliard d'identifiants générés.
+
+\paragraph{Codes ISO.} Le champ \texttt{territorial\_scope} utilise les codes pays de la norme ISO~3166-1 alpha-2 \cite{iso3166}, un standard international qui attribue un code de deux lettres majuscules à chaque pays (par exemple FR pour la France, DE pour l'Allemagne). Le champ \texttt{content\_language} utilise la norme ISO~639-1 \cite{iso639}, qui attribue un code de deux lettres minuscules à chaque langue (par exemple \texttt{fr} pour le français, \texttt{en} pour l'anglais).
+
+\paragraph{Champ \texttt{automated\_detection}.} Ce champ booléen indique si le contenu problématique a été identifié par un algorithme automatisé (filtrage par empreinte numérique, classificateur d'apprentissage automatique, etc.) ou bien par un signalement humain (utilisateur, signaleur de confiance, autorité compétente). En pratique, les grandes plateformes de réseaux sociaux détectent automatiquement entre 60 et 90\% des contenus modérés \cite{dsadb}. Cette distinction est essentielle car elle renseigne sur le degré de dépendance des plateformes vis-à-vis de leurs systèmes automatisés.
+
+\paragraph{Champ \texttt{automated\_decision}.} Ce champ à trois valeurs indique le niveau d'intervention humaine dans la prise de décision de modération. \texttt{FULLY\_AUTOMATED} signifie qu'aucun opérateur humain n'a examiné le contenu avant l'application de la sanction ; \texttt{PARTIALLY\_AUTOMATED} indique qu'un algorithme a proposé une action qui a ensuite été validée ou modifiée par un opérateur ; \texttt{NOT\_AUTOMATED} signifie que la décision a été prise entièrement par un humain. L'article~22 du RGPD \cite{rgpd} garantit aux utilisateurs un droit à l'explication et à la contestation des décisions entièrement automatisées.
+
+
+\subsection{Concepts juridiques clés}
+
+Cette sous-section explicite les concepts juridiques du DSA qui se traduisent directement en attributs techniques dans notre base de données. La compréhension de ces distinctions est essentielle pour interpréter correctement les champs \texttt{decision\_ground}, \texttt{automated\_detection} et \texttt{automated\_decision}. Les décisions de modération sont appliquées par les plateformes elles-mêmes, sous le contrôle et la supervision des autorités compétentes désignées par les États membres de l'Union Européenne (et en France, par l'Autorité de Régulation de la Communication Audiovisuelle et Numérique, ARCOM).
+
+\subsubsection{Contenu illégal vs incompatible}
+
+Le DSA (Article 3, paragraphe h \cite{dsa2022}) établit une distinction fondamentale entre deux types de contenu problématique, chacun correspondant à une valeur distincte du champ \texttt{decision\_ground} :
+
+\begin{itemize}
+    \item \textbf{Contenu illégal} (\texttt{ILLEGAL\_CONTENT}) : contenu qui viole une loi européenne ou nationale (ex: incitation à la haine raciale au sens de la Directive 2011/93/UE \cite{directive2011}, vente de produits contrefaits, matériel pédopornographique). Le fondement est juridique et étatique. La plateforme engage sa responsabilité légale si elle n'agit pas après signalement (Article 6 du DSA \cite{dsa2022}).
+    \item \textbf{Contenu incompatible}(\texttt{INCOMPATIBLE\_CONTENT}) : contenu qui enfreint les conditions générales d'utilisation (CGU) de la plateforme sans être illégal au sens du droit (ex: pourriel, désinformation, contenu explicite sur une plateforme tout public). Le fondement est contractuel. La responsabilité de la plateforme est moindre mais le DSA impose la transparence des critères appliqués (Article 14 \cite{dsa2022}).
+\end{itemize}
+
+En termes d'implémentation, cette distinction se matérialise dans le champ \texttt{decision\_ground} de la table \texttt{dsa\_decisions} et influence directement les visualisations de la section \textit{Bases juridiques} de notre tableau de bord (cf. Figure~\ref{fig:legal_grounds}).
+
+\subsubsection{Automatisation et responsabilité}
+
+Le DSA (Articles 14 et 15 \cite{dsa2022}) encadre strictement l'utilisation d'outils automatisés dans le processus de modération. Deux champs distincts capturent cette information :
+
+\begin{itemize}
+    \item \textbf{Détection automatisée} (\texttt{automated\_detection = true/false}) : indique si le contenu problématique a été identifié par un algorithme (filtrage automatique, correspondance par empreinte, classificateur d'apprentissage automatique) ou par un signalement humain (utilisateur, signaleur de confiance, autorité). En pratique, les grandes plateformes de réseaux sociaux détectent automatiquement 60 à 90\% des contenus modérés \cite{dsadb}.
+    \item \textbf{Décision automatisée} (\texttt{automated\_decision}) : indique si l'action de modération (suppression, restriction, etc.) a été prise sans intervention humaine. Trois niveaux sont définis : \texttt{FULLY\_AUTOMATED} (aucune revue humaine), \texttt{PARTIALLY\_AUTOMATED} (algorithme + validation humaine), \texttt{NOT\_AUTOMATED} (décision entièrement humaine). L'Article 22 du RGPD \cite{rgpd} garantit aux utilisateurs un droit à l'explication et à la contestation des décisions entièrement automatisées.
+\end{itemize}
+
+Ces deux dimensions sont croisées dans la section \textit{Automatisation} de notre tableau de bord (carte thermique automatisation $\times$ catégorie $\times$ plateforme), permettant d'identifier les plateformes qui automatisent le plus et les catégories de contenu les plus concernées.
+
+\section{Architecture Technique}
+
+\subsection{Vue d'ensemble}
+
+Notre plateforme adopte une architecture trois-tiers moderne, complétée par un module dédié à l'intelligence artificielle (traitement automatique du langage naturel et apprentissage automatique), illustrée dans la Figure~\ref{fig:architecture_shared_db}. Chaque couche joue un rôle fonctionnel précis : la \textbf{couche présentation} (React/Vite) gère l'interface utilisateur et la visualisation interactive des données ; le \textbf{serveur applicatif} (Express.js/Prisma) orchestre la logique métier, le filtrage, l'agrégation des requêtes et la communication avec la base de données ; le \textbf{module IA} (FastAPI/Python) expose les fonctionnalités de prédiction par apprentissage automatique et de génération SQL en langage naturel via Gemini ; enfin, la \textbf{base de données} PostgreSQL centralise l'ensemble des décisions de modération et des métadonnées.
+
+\begin{figure}[H]
+\centering
+\resizebox{\columnwidth}{!}{%
+    \begin{tikzpicture}[
+        node distance=1.5cm, 
+        auto,
+        block/.style={rectangle, draw, fill=blue!20, text width=3cm, text centered, rounded corners, minimum height=1cm},
+        db/.style={cylinder, draw, fill=green!20, shape border rotate=90, aspect=0.3, minimum height=1.2cm, minimum width=2.2cm}
+    ]
+    
+    % --- Noeuds ---
+    
+    % Couche Présentation
+    \node[block] (frontend) {Couche présentation\\React 19 + Vite};
+    
+    % Couche Métier - Serveur applicatif 1
+    \node[block, below=of frontend] (backend) {Serveur applicatif\\Express.js + Prisma};
+    
+    % Couche IA - Serveur applicatif 2
+    \node[block, right=1.5cm of backend] (ia) {TALN / IA};
+    
+    % Couche Données
+    \node[db, below=2cm of backend, xshift=2.25cm] (db) {PostgreSQL};
+    
+    % --- Flèches ---
+    
+    % Client -> Express
+    \draw[<->] (frontend) -- node[right] {API REST} (backend);
+    \draw[<->] (frontend) -- node[right] {API REST} (ia);
+    
+    % Express -> DB
+    \draw[<->] (backend.south) -- node[left, xshift=-0.1cm] {Prisma} (db.150);
+    
+    % NLP -> DB
+    \draw[<->] (ia.south) -- node[right, xshift=0.1cm] {} (db.30);
+    
+    % --- Labels ---
+    \node[left=0.5cm of frontend, font=\bfseries] {Présentation};
+    \node[left=0.5cm of backend, font=\bfseries] {Métier};
+    \node[left=0.8cm of db, font=\bfseries, yshift=0.5cm] {Données};
+    
+    \end{tikzpicture}%
+}
+\caption{Architecture trois-tiers avec base de données partagée et communication via FastAPI}
+\label{fig:architecture_shared_db}
+\end{figure}
+
+\subsection{Pile technologique}
+
+\subsubsection{Couche présentation (côté client)}
+
+\begin{itemize}
+    \item \textbf{React 19} \cite{react} : bibliothèque d'interface utilisateur avec \textit{hooks} et composants fonctionnels
+    \item \textbf{TypeScript} : typage statique pour la robustesse du code
+    \item \textbf{Vite 7} \cite{vite} : empaqueteur moderne pour le développement rapide
+    \item \textbf{TanStack Query} \cite{tanstack} : gestion du cache et des requêtes asynchrones
+    \item \textbf{ECharts 6} \cite{echarts} : bibliothèque de visualisation interactive
+    \item \textbf{Lucide React} : icônes vectorielles
+    \item \textbf{Modules CSS} : styles isolés par composant
+\end{itemize}
+
+\subsubsection{Serveur applicatif (côté serveur)}
+
+\begin{itemize}
+    \item \textbf{Node.js} \cite{nodejs} : environnement d'exécution JavaScript côté serveur
+    \item \textbf{Express.js} \cite{expressjs} : cadriciel web minimaliste
+    \item \textbf{Prisma ORM} \cite{prisma} : correspondance objet-relationnelle avec typage sûr
+    \item \textbf{TypeScript} : typage de bout en bout
+\end{itemize}
+
+\subsubsection{Base de données -- Choix et justification}
+
+Le choix du SGBD a été guidé par une étude comparative approfondie de trois candidats :
+
+\begin{itemize}
+    \item \textbf{MySQL} \cite{mysql} : performances correctes pour les charges de travail transactionnelles classiques, mais limitations sur les fonctionnalités analytiques avancées (expressions de table communes, fonctions de fenêtrage) et le support des types complexes (JSON, tableaux). Intégration science des données moins optimale.
+    \item \textbf{SQLite} \cite{sqlite} : simplicité d'une base embarquée, mais absence de concurrence multi-utilisateurs, dégradation rapide au-delà de quelques millions de lignes, et fonctionnalités SQL limitées. Inadapté à un système à forte intensité de données.
+    \item \textbf{PostgreSQL} \cite{postgresql} : conformité ACID stricte, support natif des types avancés (JSONB, tableaux, UUID), richesse analytique (expressions de table communes récursives, fonctions de fenêtrage, agrégations avancées), performances éprouvées sur gros volumes, et excellente intégration Python (SQLAlchemy, Pandas, Psycopg2). Gestion efficace des index B-tree, GiST et GIN.
+\end{itemize}
+
+\textbf{Décision technique} : PostgreSQL version 17 a été retenu. Cette version apporte des améliorations en performances d'agrégation, parallélisation des requêtes et gestion mémoire. Le choix est justifié par la compatibilité native avec SQLAlchemy utilisé dans le pipeline d'apprentissage automatique, le support des requêtes analytiques complexes, la robustesse transactionnelle pour l'insertion massive, et l'extensibilité future. La documentation officielle de PostgreSQL \cite{postgresql} et les travaux comparatifs de Juba et Vannahme \cite{juba2015} confirment les avantages de PostgreSQL pour les charges analytiques sur gros volumes.
+
+Les fonctionnalités exploitées incluent :
+\begin{itemize}
+    \item \textbf{JSONB} : support des données semi-structurées (\texttt{territorial\_scope})
+    \item \textbf{Vues matérialisées} : pré-calcul des agrégations pour les tableaux de bord
+    \item \textbf{Déclencheurs (triggers)} : synchronisation automatique des tables de référence
+\end{itemize}
+
+
+\subsubsection{Apprentissage automatique et TALN (Intelligence Artificielle)}
+
+\begin{itemize}
+    \item \textbf{Python 3.11} : environnement d'exécution des modèles d'IA
+    \item \textbf{Points d'accès TALN/IA} : prédiction de décisions de modération, génération de SQL depuis le langage naturel, mise à jour des référentiels et invites (\textit{prompts})
+    \item \textbf{Communication REST} : le serveur applicatif principal interagit avec le module d'IA via le protocole HTTP
+    \item \textbf{Séparation des responsabilités} : découplage des traitements d'IA du serveur applicatif principal pour une meilleure maintenabilité et extensibilité
+\end{itemize}
+
+\subsubsection{Infrastructure et hébergement infonuagique}
+
+Le choix de l'infrastructure infonuagique (\textit{cloud}) a fait l'objet d'une étude comparative entre les trois principaux fournisseurs :
+
+\begin{itemize}
+    \item \textbf{AWS} \cite{aws} : offre la plus exhaustive du marché (EC2, EKS), mais complexité de l'écosystème, tarification peu transparente, et courbe d'apprentissage élevée. Surdimensionné pour un projet académique.
+    \item \textbf{Microsoft Azure} \cite{azure} : maturité dans l'écosystème Microsoft (Azure VM, AKS), mais intégration moins fluide avec les outils libres (PostgreSQL, Python, Docker). Pas d'avantage décisif pour un projet axé ingénierie des données.
+    \item \textbf{Google Cloud Platform} \cite{gcp} : positionnement orienté données, excellence en apprentissage automatique. Tarification claire et prévisible. Intégration native avec BigQuery, Cloud SQL et l'API Gemini \cite{gemini}, atout majeur pour notre pipeline TALN/IA. Crédits étudiants généreux (300\,\$ sur 12 mois).
+\end{itemize}
+
+\textbf{Décision technique} : Google Cloud Platform a été retenu pour les raisons suivantes : simplicité opérationnelle (Docker \cite{docker} pré-installé sur Compute Engine), intégration IA native (API Gemini), latence optimisée pour PostgreSQL, documentation claire orientée ingénierie des données, et coût maîtrisé.
+
+\paragraph{Dépendances logicielles et considérations de protection des données.} Ces choix technologiques, bien que justifiés, introduisent des dépendances vis-à-vis de tiers et soulèvent des questions de conformité au RGPD \cite{rgpd}. En particulier, l'utilisation de l'API Gemini (Google) implique que les requêtes formulées par les utilisateurs -- notamment les descriptions de situations en langage naturel -- sont transmises aux serveurs de Google pour traitement. Si un utilisateur de notre outil analyse un cas impliquant une personne physique identifiable (par exemple un journaliste examinant la modération d'un compte particulier), ces données pourraient transiter vers des serveurs hors Union Européenne, ce qui constitue un transfert de données à caractère personnel soumis aux dispositions des articles 44 à 49 du RGPD \cite{rgpd}. Des mesures d'atténuation possibles incluent l'anonymisation systématique des entrées avant envoi à l'API, l'utilisation de modèles de langage auto-hébergés (alternatives \textit{open source}), ou la restriction de l'accès à la fonctionnalité TALN aux seuls utilisateurs ayant expressément consenti à ces transferts. Dans l'état actuel de notre preuve de concept académique, cette limitation est reconnue et documentée ; une version de production devrait faire l'objet d'une analyse d'impact relative à la protection des données (AIPD) conformément à l'article 35 du RGPD. Nous recommandons par ailleurs de consulter le Délégué à la Protection des Données (DPO) de l'UPEC (\texttt{dpo@u-pec.fr}) afin d'obtenir un avis sur le statut d'anonymisation des données DSA dans ce contexte d'utilisation.
+
+\paragraph{Configuration de la machine virtuelle (VM).} Une machine virtuelle (\textit{Virtual Machine}, VM) est une émulation logicielle d'un ordinateur physique, permettant d'exécuter un système d'exploitation complet dans un environnement isolé au sein d'un serveur distant. Une instance Compute Engine de série N2 a été provisionnée (4 processeurs virtuels, 16~Go de mémoire vive, SSD 150~Go). L'accès SSH est sécurisé via des clés Ed25519 générées localement :
+
+\begin{lstlisting}[language=bash, caption={Configuration SSH et accès à la VM}]
+# Generation de cle SSH
+ssh-keygen -t ed25519 -C "name_of_user"
+# Connexion a la VM
+ssh name_of_user@<adresse_ip_serveur>
+\end{lstlisting}
+
+\paragraph{Installation de PostgreSQL sur la VM.} PostgreSQL a été installé et configuré directement sur la VM pour maximiser les performances (absence de latence réseau) :
+
+\begin{lstlisting}[language=bash, caption={Installation et configuration PostgreSQL}]
+# Installation
+sudo apt install postgresql postgresql-contrib -y
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+# Creation de la base et des utilisateurs
+sudo -i -u postgres
+CREATE DATABASE dsa;
+CREATE USER dsa_admin WITH PASSWORD '***';
+GRANT ALL PRIVILEGES ON DATABASE dsa TO dsa_admin;
+\end{lstlisting}
+
+Les connexions distantes sont autorisées via la configuration de \texttt{listen\_addresses = '*'} dans \texttt{postgresql.conf} et l'ajout de la règle \texttt{host all all 0.0.0.0/0 md5} dans \texttt{pg\_hba.conf}.
+
+\paragraph{Conteneurisation des services.} La \textbf{conteneurisation} est une technique d'isolation logicielle qui permet d'empaqueter une application avec toutes ses dépendances dans une unité portable et reproductible appelée conteneur. Contrairement aux machines virtuelles, les conteneurs partagent le noyau du système d'exploitation hôte, ce qui les rend beaucoup plus légers et rapides à démarrer. Les avantages principaux pour notre projet sont : la \textbf{portabilité} (le même conteneur fonctionne identiquement en développement, test et production), la \textbf{reproductibilité} (élimine les problèmes de type « ça fonctionne sur ma machine »), et la \textbf{isolation} (chaque service dispose de son propre environnement, évitant les conflits de dépendances). L'ensemble des services applicatifs est orchestré via Docker Compose \cite{docker} :
+\begin{itemize}
+    \item \textbf{Docker} : conteneurisation de la couche présentation, du serveur applicatif et du module IA
+    \item \textbf{Docker Compose} : orchestration multi-conteneurs
+    \item \textbf{Nginx} : serveur web et mandataire inverse (\textit{reverse proxy}) pour le routage des requêtes
+\end{itemize}
+
+\subsection{Organisation du code}
+
+La structure du projet est organisée en trois répertoires principaux correspondant aux trois couches de l'architecture. Le répertoire \texttt{backend/} contient la logique métier avec les contrôleurs HTTP, les routes d'API, les services métier, la configuration et les types TypeScript, ainsi que le schéma de correspondance objet-relationnelle Prisma. Le répertoire \texttt{frontend/} contient les composants React de l'interface, les \textit{hooks} personnalisés, les contextes React pour la gestion d'état globale, les services d'appel à l'API, les utilitaires et les feuilles de style. Le répertoire \texttt{database/} contient les scripts SQL d'initialisation et de migration. Un fichier \texttt{docker-compose.yml} à la racine orchestre l'ensemble des services.
+
+\begin{lstlisting}[language=bash, caption={Structure du projet TBC MANU}]
+dsa-dashboard/
+|- backend/
+|   |- src/
+|   |   |- controllers/    # Logique HTTP
+|   |   |- routes/         # Points d'acces API
+|   |   |- services/       # Logique metier
+|   |   |- config/         # Configuration
+|   |   +-- types/         # Types TypeScript
+|   |- prisma/             # Schema ORM
+|   +-- Dockerfile
+|- frontend/
+|   |- src/
+|   |   |- components/     # Composants React
+|   |   |- hooks/          # Hooks personnalises
+|   |   |- context/        # Contextes React
+|   |   |- data/           # Services API
+|   |   |- utils/          # Utilitaires
+|   |   +-- styles/        # CSS globaux
+|   +-- Dockerfile
+|- database/               # Scripts SQL
++-- docker-compose.yml
+\end{lstlisting}
+
+Le répertoire \texttt{controllers/} contient les contrôleurs qui reçoivent les requêtes HTTP et délèguent le traitement aux services. Le répertoire \texttt{services/} encapsule la logique métier : construction des requêtes SQL, agrégation des données, application des filtres. Le répertoire \texttt{hooks/} du côté client contient les \textit{hooks} React personnalisés qui encapsulent les appels API via TanStack Query, offrant gestion du cache, des états de chargement et des erreurs.
+
+
+\section{Schéma de Données}
+
+\subsection{Modèle relationnel normalisé}
+
+Pour optimiser les performances et réduire la redondance, nous avons conçu un schéma normalisé avec tables de référence (Figure~\ref{fig:schema}). La normalisation consiste à décomposer les données répétitives (noms de plateformes, catégories, types de décision) en tables de référence distinctes, et à ne stocker dans la table principale que des identifiants numériques courts (\texttt{SMALLINT}) plutôt que des chaînes de caractères. Ce choix réduit considérablement la taille de la table principale -- qui contient des dizaines de millions de lignes -- et accélère les requêtes de jointure et de filtrage. Les déclencheurs (\textit{triggers}) PostgreSQL assurent la mise à jour automatique de ces tables de référence lors de l'insertion de nouvelles entrées, ce qui garantit la cohérence des données sans intervention manuelle. Les vues matérialisées pré-calculent les agrégations les plus fréquemment demandées (comptages par plateforme, par catégorie, par pays) afin de réduire les temps de réponse des tableaux de bord à quelques dizaines de millisecondes même sur des jeux de données de millions d'entrées.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.8, transform shape,
+    entity/.style={
+        rectangle, draw, fill=yellow!30, 
+        minimum height=0.8cm, 
+        text width=4cm, 
+        align=center
+    },
+    ref/.style={
+        rectangle, draw, fill=green!30, 
+        minimum height=0.6cm, 
+        text width=3cm, 
+        align=center
+    }]
+    
+    % Table principale
+    \node[entity] (main) at (0,0) {\textbf{moderation\_entries}};
+    
+    % Tables de référence
+    \node[ref] (plat) at (-5,1) {platforms};
+    \node[ref] (cat) at (-2.5,2) {categories};
+    \node[ref] (dtype) at (0,2) {decision\_types};
+    \node[ref] (dground) at (2.5,2) {decision\_grounds};
+    \node[ref] (ctype) at (5,1) {content\_types};
+    
+    % Relations
+    \draw[->] (main) -- (plat);
+    \draw[->] (main) -- (cat);
+    \draw[->] (main) -- (dtype);
+    \draw[->] (main) -- (dground);
+    \draw[->] (main) -- (ctype);
+    
+\end{tikzpicture}
+\caption{Modèle entité-relation simplifié}
+\label{fig:schema}
+\end{figure}
+
+
+\subsection{Tables de référence}
+
+\begin{lstlisting}[language=SQL, caption={Définition des tables de référence}]
+CREATE TABLE platforms (
+    id SMALLSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE categories (
+    id SMALLSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE decision_types (
+    id SMALLSERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE decision_grounds (
+    id SMALLSERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE content_types (
+    id SMALLSERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+\end{lstlisting}
+
+\subsection{Table principale}
+
+\begin{lstlisting}[language=SQL, caption={Table principale moderation\_entries}]
+CREATE TABLE moderation_entries (
+    id VARCHAR(50) PRIMARY KEY,
+    application_date DATE NOT NULL,
+    content_date DATE,
+    platform_id SMALLINT NOT NULL 
+        REFERENCES platforms(id),
+    category_id SMALLINT NOT NULL 
+        REFERENCES categories(id),
+    decision_type_id SMALLINT NOT NULL 
+        REFERENCES decision_types(id),
+    decision_ground_id SMALLINT NOT NULL 
+        REFERENCES decision_grounds(id),
+    incompatible_content_ground TEXT,
+    content_type_id SMALLINT 
+        REFERENCES content_types(id),
+    automated_detection BOOLEAN,
+    automated_decision BOOLEAN,
+    country_code CHAR(2),
+    territorial_scope JSONB,
+    language VARCHAR(10),
+    delay_days INTEGER,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+\end{lstlisting}
+
+\section{Interface Utilisateur et Fonctionnalités}
+
+L'interface du tableau de bord de la DSA transparency est présentée dans les Figures~\ref{fig:overview_timeseries} à~\ref{fig:dashboard_full}. Notre approche de visualisation se distingue d'une solution BI généraliste (Tableau, Power BI) par son intégration native du vocabulaire réglementaire DSA (bases légales, catégories de violation, champs \texttt{automated\_decision}), son pipeline IA couplé à la navigation, et son déploiement sans installation côté client -- atouts essentiels pour les profils non-informaticiens ciblés (juristes, journalistes, régulateurs). Chaque section est commentée ci-dessous du point de vue des cas d'utilisation présentés en section~VII.
+
+\subsection{Sections d'analyse}
+
+\subsubsection{Vue d'ensemble et séries temporelles (Figure~\ref{fig:overview_timeseries})}
+La section de vue d'ensemble présente les indicateurs clés de performance via des cartes animées : total des actions de modération, nombre de plateformes actives, délai moyen de traitement, taux de détection automatisée, taux de décision automatisée, et nombre de pays concernés. La section de séries temporelles visualise l'évolution dans le temps via des graphiques linéaires des actions mensuelles, l'évolution du délai de réponse moyen, et la comparaison multi-plateformes (Figure~\ref{fig:actions_by_platform}). \textit{Cas d'usage typique} : un régulateur (CU2) identifiera d'un coup d'œil la tendance temporelle du taux d'automatisation avant de plonger dans l'analyse détaillée.
+
+\subsubsection{Comparaison des plateformes (Figure~\ref{fig:platform_comparison})}
+Compare les pratiques des plateformes de réseaux sociaux via un graphique à barres horizontales des volumes, un diagramme empilé des types de décision, et un radar des profils de catégories pour les trois premières plateformes. \textit{Cas d'usage typique} : un chercheur en droit du numérique (CU1) utilisera ce tableau pour comparer les volumes de modération de TikTok et Meta avant d'affiner par pays.
+
+\subsubsection{Bases juridiques (Figures~\ref{fig:legal_grounds} et~\ref{fig:treemap})}
+Analyse les bases juridiques : classement des 10 motifs de décision les plus fréquents, répartition base légale \textit{vs} conditions d'utilisation, et arbre hiérarchique (\textit{treemap}) catégories/motifs. \textit{Cas d'usage typique} : un journaliste d'investigation (CU3) exporte ce graphique en PNG après avoir filtré sur la France pour son rapport.
+
+\subsubsection{Automatisation}
+Étudie l'automatisation : diagrammes en anneau de la détection et décision automatisées, comparaison des taux par plateforme, et carte thermique (\textit{heatmap}) automatisation $\times$ catégorie $\times$ plateforme.
+
+\subsubsection{Répartition géographique (Figures~\ref{fig:geography} et~\ref{fig:language})}
+Cartographie territoriale : distribution par pays de l'UE (diagramme en rose), classement des pays les plus affectés, et distribution par langue du contenu. \textit{Cas d'usage typique} : un analyste de conformité (CU4) sélectionne TikTok et parcourt la carte pour repérer les disparités entre États membres.
+
+\subsubsection{Type de contenu (Figure~\ref{fig:content_type})}
+Analyse par type de contenu : types de décision par format de contenu, distribution des types de contenu (diagramme circulaire), délai de réponse par type, et analyse efficacité volume/délai.
+
+\subsubsection{Qualité des données}
+Contrôle qualité des données : taux de valeurs manquantes par champ, jauge de complétude globale, et liste des enregistrements incomplets.
+
+\subsection{Système de filtres (Figure~\ref{fig:filters})}
+
+Le panneau de filtres permet une sélection multi-critères. L'état des filtres est modélisé par une interface TypeScript comprenant : une plage de dates, une liste de plateformes, une liste de catégories, une liste de types de décision, une liste de motifs de décision, une liste de pays, une liste de types de contenu, ainsi que des indicateurs booléens optionnels pour la détection automatisée et la décision automatisée.
+
+\begin{lstlisting}[language=Java, caption={Modèle de l'état des filtres}]
+interface FilterState {
+  dateRange: { start: string; end: string } | null;
+  platforms: string[];
+  categories: string[];
+  decisionTypes: string[];
+  decisionGrounds: string[];
+  countries: string[];
+  contentTypes: string[];
+  automatedDetection: boolean | null;
+  automatedDecision: boolean | null;
+}
+\end{lstlisting}
+
+Les filtres sont gérés via un contexte React pour une propagation globale aux composants enfants, et les requêtes sont optimisées via TanStack Query avec un cache de 5~minutes.
+
+\section{Apprentissage Automatique et Traitement Automatique du Langage Naturel}
+
+\subsection{Problématique de prédiction}
+
+Notre modèle d'apprentissage automatique vise à prédire automatiquement la décision de modération à partir des caractéristiques de l'entrée, permettant :
+\begin{itemize}
+    \item L'identification des incohérences dans les décisions historiques
+    \item La détection des cas ambigus nécessitant révision humaine
+    \item L'audit des pratiques de modération
+\end{itemize}
+
+\subsection{Pipeline de données}
+
+Il est important de souligner que la présente version est une \textbf{preuve de concept (PoC) à données statiques} : nous n'ingérons pas les données DSA en temps réel, mais nous travaillons sur un instantané filtré représentant environ 10 jours de données pour 15 plateformes. Cette approche est justifiée pour un projet académique, mais une version de production nécessiterait un pipeline de streaming continu (voir section~X.D). La Figure~\ref{fig:pipeline_diagram} synthétise les étapes de traitement et les volumes de données associés.
+
+\subsubsection{Filtrage des données brutes}
+
+Le script \texttt{1\_filter\_zip\_to\_csv.py} traite les données DSA brutes fournies sous forme d'archives ZIP imbriquées (\textbf{entrée : $\sim$1~Go compressé, $\sim$20~Go décompressé}). Il effectue un filtrage ciblé sur 15 plateformes stratégiques (TikTok, Instagram, Facebook, YouTube, X, Pornhub, XNXX, XVideos, Snapchat, Reddit, LinkedIn, Amazon Store, AliExpress, Temu, Shein) en utilisant une lecture par blocs de 200\,000 lignes via Pandas pour éviter la saturation mémoire. Cette approche réduit le volume de données de 85--90\% tout en garantissant un échantillonnage temporel représentatif (\textbf{sortie : $\sim$2--3~Go}).
+
+Les données filtrées sont segmentées en fichiers CSV de maximum 800\,000 lignes chacun ($\sim$700--900~Mo), optimisant les performances d'import PostgreSQL. Le script génère une série de fichiers numérotés (\texttt{filtered\_part\_01.csv}, \texttt{filtered\_part\_02.csv}, etc.) prêts pour l'ingestion en base de données.
+
+\subsubsection{Import en base de données}
+
+Le script \texttt{2\_import\_csv\_postgresql.py} assure l'ingestion des fichiers CSV filtrés dans la table PostgreSQL \texttt{dsa\_decisions} (\textbf{volume final : $\sim$17 millions de lignes, $\sim$50~Go}). Avant l'import, un alignement des colonnes est effectué : chaque CSV est relu avec Pandas, filtré pour ne conserver que les 27 colonnes correspondant exactement au schéma de la table cible, puis ré-exporté dans un répertoire temporaire \texttt{\_aligned/}.
+
+L'import utilise la commande native PostgreSQL \texttt{\textbackslash copy} via \texttt{psql}, offrant des performances supérieures aux méthodes Python classiques (SQLAlchemy \texttt{to\_sql}). Les paramètres de connexion sont centralisés dans le fichier \texttt{.env} via le module \texttt{config.py}. Cette architecture permet d'importer plusieurs millions de lignes en quelques minutes.
+
+\subsubsection{Transformation des caractéristiques}
+
+\begin{enumerate}
+    \item \textbf{Nettoyage} : remplacement des valeurs manquantes par \texttt{UNKNOWN}, harmonisation des encodages
+    \item \textbf{Construction de la cible} : la variable \texttt{target\_decision} est construite en priorisant les décisions sur le compte, puis la visibilité, monétaire ou provisoire
+    \item \textbf{Filtrage des classes rares} : suppression des classes avec moins de 10 occurrences pour garantir la robustesse
+    \item \textbf{Division} : 80\% entraînement / 20\% test avec stratification pour préserver la distribution des classes
+    \item \textbf{Encodage} : encodage à chaud (\textit{one-hot encoding}) des variables catégorielles
+\end{enumerate}
+
+\subsection{Modèle de classification}
+
+Le modèle vise à prédire automatiquement le type de décision prise par les plateformes (restriction de visibilité, suspension de compte, sanction monétaire ou suppression de contenu). Le pipeline extrait les données depuis PostgreSQL (limite configurable : 500\,000 lignes).
+
+Les caractéristiques utilisées sont : le motif de décision (\texttt{decision\_ground}), la catégorie de contenu, le type de contenu, le nom de la plateforme, la détection automatisée, le type de source, et la langue du contenu.
+
+Nous utilisons une régression logistique multiclasse via scikit-learn \cite{sklearn} avec parallélisation activée :
+
+\begin{lstlisting}[language=Python, caption={Pipeline d'apprentissage automatique simplifié}]
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.linear_model import LogisticRegression
+
+pipeline = Pipeline([
+    ('encoder', OneHotEncoder(
+        handle_unknown='ignore')),
+    ('classifier', LogisticRegression(
+        max_iter=1000,
+        multi_class='multinomial'))
+])
+
+X = df[['category', 'content_type', 
+        'platform_name', 'automated_detection',
+        'content_language']]
+y = df['decision_target']
+
+X_train, X_test, y_train, y_test = \
+    train_test_split(X, y, test_size=0.2)
+
+pipeline.fit(X_train, y_train)
+\end{lstlisting}
+
+\subsection{Résultats}
+
+Le modèle atteint une précision élevée grâce à la cohérence des pratiques de modération des grandes plateformes de réseaux sociaux. Le Tableau~\ref{tab:ml_results} résume les performances obtenues.
+
+\begin{table}[H]
+\centering
+\caption{Performances du modèle de classification}
+\label{tab:ml_results}
+\footnotesize
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Métrique} & \textbf{Valeur} \\
+\hline
+Exactitude globale (\textit{accuracy}) & 98\% \\
+\hline
+Précision pondérée (\textit{weighted precision}) & 97\% \\
+\hline
+Rappel pondéré (\textit{weighted recall}) & 98\% \\
+\hline
+Score F1 pondéré & 97\% \\
+\hline
+Nombre de classes & 10 \\
+\hline
+Taille jeu d'entraînement & 160\,000 lignes (80\%) \\
+\hline
+Taille jeu de test & 40\,000 lignes (20\%) \\
+\hline
+\end{tabular}
+\end{table}
+
+Le modèle génère trois sorties principales : un fichier \texttt{.joblib} contenant le pipeline entraîné pour réutilisation en production, un rapport de classification avec exactitude et précision pondérée, et une table PostgreSQL \texttt{dsa\_train\_test} stockant les prédictions avec leur niveau de confiance et leur exactitude. Les classes rares restent difficiles à prédire, ce qui reflète la complexité réelle des cas limites.
+
+\subsection{Stockage et audit}
+
+Les prédictions sont persistées dans une table dédiée \texttt{dsa\_train\_test} avec : la décision réelle comparée à la décision prédite, le score de confiance, un indicateur d'erreur, et la version du modèle.
+
+\subsection{Intégration TALN}
+
+Le module de traitement automatique du langage naturel (TALN) permet aux utilisateurs d'exprimer des situations en langage naturel et d'obtenir une prédiction de décision de modération. Ce module est composé de trois scripts complémentaires qui, ensemble, forment un pipeline de bout en bout allant du texte libre à une prédiction structurée. Pour donner un exemple concret : si un analyste saisit la phrase \textit{« vente d'armes sur LinkedIn »}, le module identifie automatiquement la plateforme (LinkedIn), la catégorie de violation (\texttt{UNSAFE\_PRODUCTS}), et prédit que la décision de modération la plus probable est une \texttt{REMOVAL} (suppression). Ce résultat est accompagné d'un score de confiance et des 10 caractéristiques ayant le plus influencé la prédiction -- ce qui permet à l'utilisateur de comprendre et de questionner le raisonnement du modèle.
+
+\subsubsection{Étape 1 : Extraction du référentiel}
+
+Le script \texttt{5\_1} extrait automatiquement toutes les valeurs distinctes de sept colonnes stratégiques depuis PostgreSQL (\texttt{decision\_ground}, \texttt{category}, \texttt{content\_type}, \texttt{platform\_name}, \texttt{automated\_detection}, \texttt{source\_type}, \texttt{content\_language}). Ces valeurs sont exportées dans un fichier JSON (\texttt{dsa\_reference\_values.json}) servant de dictionnaire de référence. Cette approche garantit la synchronisation avec les données réelles de la base.
+
+\subsubsection{Étape 2 : Génération de l'invite Gemini}
+
+Le script \texttt{5\_2} génère automatiquement une invite (\textit{prompt}) structurée pour le modèle de langage Gemini \cite{gemini}. Il charge le référentiel JSON et construit une invite contenant tous les attributs possibles avec leur index numérique (ex: \texttt{0 = ILLEGAL\_CONTENT}, \texttt{1 = INCOMPATIBLE\_CONTENT}). L'invite instruit Gemini à répondre uniquement avec des indices numériques séparés par des virgules, sans explication. En extrayant toutes les valeurs distinctes de la base de données dans l'invite, on force le modèle de langage à choisir parmi des variables données : il est cadré et dirigé, sans libre cours à son interprétation arbitraire.
+
+\subsubsection{Étape 3 : Pipeline de bout en bout}
+
+Le script principal orchestre l'ensemble du processus :
+
+\begin{enumerate}
+    \item \textbf{Extraction sémantique} : l'utilisateur saisit une phrase en langage naturel décrivant une situation. Cette phrase est envoyée à Gemini avec l'invite structurée.
+    \item \textbf{Décodage} : Gemini retourne une séquence d'indices numériques (ex: \texttt{5,2,1,8,0,3,fr}). Ces indices sont décodés via le référentiel pour reconstituer les caractéristiques attendues par le modèle d'apprentissage automatique.
+    \item \textbf{Inférence} : les caractéristiques sont transformées en tableau de données (\textit{DataFrame}) et passées au pipeline scikit-learn (\texttt{.joblib}) pour obtenir une prédiction finale avec son niveau de confiance.
+\end{enumerate}
+
+\subsubsection{Explicabilité}
+
+Le système intègre une couche d'explicabilité en extrayant les coefficients de régression logistique. Les 10 caractéristiques ayant le plus contribué à la décision sont affichées avec leur poids positif ou négatif, permettant de comprendre quels attributs ont influencé la prédiction. Cela contribue à permettre de répondre aux exigences de transparence des systèmes automatisés imposées par le DSA.
+
+\subsubsection{Architecture modulaire et maintenance}
+
+Cette architecture en trois étapes présente des avantages concrets qui méritent d'être détaillés. Premièrement, la \textbf{maintenabilité} : si la base de données DSA évolue (nouvelles plateformes, nouvelles catégories de violation), il suffit de ré-exécuter les scripts \texttt{5\_1} et \texttt{5\_2} pour mettre à jour automatiquement le référentiel et l'invite sans toucher au code de prédiction. Deuxièmement, la \textbf{séparation des responsabilités} : le modèle de langage Gemini joue le rôle d'un analyseur sémantique et d'un extracteur d'informations structurées, tandis que le modèle de régression logistique joue le rôle d'un classifieur statistique robuste. Cette division du travail évite de demander à un seul composant d'assumer à la fois la compréhension du langage naturel et la classification statistique, ce qui aurait dégradé les performances sur les deux fronts. Troisièmement, la \textbf{transparence} : en forçant Gemini à répondre par des indices numériques, chaque étape de la chaîne est auditable -- il est possible d'inspecter exactement quelles caractéristiques ont été extraites et comment elles ont été utilisées par le classifieur.
+
+\subsection{Génération automatique de requêtes SQL (langage naturel $\rightarrow$ SQL)}
+
+Ce module permet aux utilisateurs non techniques de générer automatiquement des requêtes SQL PostgreSQL en posant une question en langage naturel. Le système exploite Gemini couplé au schéma de base de données et au référentiel métier.
+
+\subsubsection{Extraction du schéma}
+
+Le script \texttt{6\_1} interroge \texttt{information\_schema.columns} de PostgreSQL pour extraire automatiquement le schéma complet de la table \texttt{dsa\_decisions} (nom et type de chaque colonne). Le résultat est exporté dans un fichier JSON (\texttt{dsa\_table\_schema.json}), garantissant la synchronisation avec l'évolution du schéma.
+
+\subsubsection{Génération SQL via Gemini}
+
+Le script \texttt{6\_2} construit une invite complexe combinant trois sources d'information : le schéma SQL, le référentiel des valeurs métier (script \texttt{5\_1}), et la question de l'utilisateur. L'invite impose des règles strictes : répondre uniquement avec du SQL valide PostgreSQL, cibler uniquement la table \texttt{dsa\_decisions}, et produire des requêtes exploitables pour des graphiques.
+
+Des règles métier spécifiques sont intégrées. Par exemple, le champ \texttt{territorial\_scope} contenant des codes pays ISO sous forme textuelle nécessite l'opérateur \texttt{LIKE} pour les filtres géographiques.
+
+\subsubsection{Processus utilisateur et qualité des requêtes générées}
+
+L'utilisateur saisit une question analytique en français (ex: \textit{« Quel pourcentage de décisions concerne la France ? »}). Gemini identifie les colonnes pertinentes, applique les règles métier, et génère une requête SQL optimisée avec agrégations, filtres et groupements appropriés. En termes de qualité, nos tests montrent que le module génère correctement l'ensemble des constructions SQL de base : \texttt{SELECT}, \texttt{WHERE}, \texttt{GROUP BY}, \texttt{ORDER BY}, \texttt{HAVING}, \texttt{JOIN}, sous-requêtes et agrégations (\texttt{COUNT}, \texttt{AVG}, \texttt{SUM}). Les cas complexes impliquant des requêtes multi-intentions ou des conditions imbriquées restent un axe d'amélioration (voir section~X.C).
+
+Cette approche « schéma + référentiel + modèle de langage » élimine le besoin de connaissances SQL pour les analystes métier, réduit les erreurs de syntaxe, et s'adapte automatiquement aux évolutions du schéma.
+
+\subsection{Conteneurisation du module IA}
+
+\subsubsection{Architecture Docker}
+
+Le module IA a été conteneurisé avec Docker \cite{docker} pour garantir portabilité et reproductibilité. Le fichier Dockerfile utilise l'image \texttt{python:3.12-slim} et installe les dépendances système PostgreSQL (\texttt{build-essential}, \texttt{libpq-dev}). Le code source est organisé en trois répertoires : \texttt{script} (scripts Python et API FastAPI \cite{fastapi}), \texttt{data\_zip} (référentiels et modèles d'apprentissage automatique), et \texttt{data\_filtered} (données prétraitées).
+
+\subsubsection{Configuration et déploiement}
+
+La configuration sensible (identifiants PostgreSQL, clés API Gemini) est externalisée dans un fichier \texttt{.env} injecté à l'exécution via \texttt{-{}-env-file}, évitant d'inclure des informations d'identification dans l'image Docker :
+
+\begin{lstlisting}[language=bash, caption={Déploiement du conteneur IA}]
+# Construction et publication
+docker build -t shyamsubrun/megadonnee-dsa:latest .
+docker push shyamsubrun/megadonnee-dsa:latest
+
+# Execution sur le serveur
+sudo docker run -d \
+  --env-file /home/user/.env \
+  -p 8000:8000 \
+  -w /app/script \
+  --name megadonnee-dsa \
+  shyamsubrun/megadonnee-dsa:latest \
+  uvicorn api:app --host 0.0.0.0 --port 8000
+\end{lstlisting}
+
+Cette approche permet un déploiement en une seule commande, une isolation complète de l'environnement d'exécution, et la gestion simplifiée des versions via les étiquettes Docker. L'externalisation du \texttt{.env} maintient une seule image pour tous les environnements (développement, pré-production, production).
+
+
+\section{Cas d'Usage}
+
+La présente section illustre comment différents profils d'utilisateurs exploitent concrètement la plateforme. Ces cas d'usage ont guidé les choix de conception de l'interface et sont directement associés aux captures d'écran de la section précédente.
+
+\subsection{CU1 : Analyse des disparités territoriales}
+
+\textbf{Rôle} : Chercheur en droit du numérique.
+
+\textbf{Question} : Comment la politique de modération de TikTok diffère-t-elle entre la France et l'Allemagne ?
+
+\textbf{Actions} :
+\begin{enumerate}
+    \item Sélectionner TikTok dans le filtre Plateformes (Figure~\ref{fig:filters})
+    \item Sélectionner FR et DE dans le filtre Pays
+    \item Consulter la section Répartition géographique pour la comparaison (Figure~\ref{fig:geography})
+    \item Consulter Bases juridiques pour les fondements légaux (Figure~\ref{fig:legal_grounds})
+\end{enumerate}
+
+\textbf{Résultat} : Identification des catégories de violation prédominantes par pays et des différences de traitement entre les deux États membres.
+
+\subsection{CU2 : Impact de l'automatisation}
+
+\textbf{Rôle} : Régulateur (ARCOM ou autorité nationale compétente).
+
+\textbf{Question} : Quel est l'impact de l'automatisation sur la cohérence des décisions ?
+
+\textbf{Actions} :
+\begin{enumerate}
+    \item Consulter la section Automatisation
+    \item Filtrer par \texttt{automated\_decision = true}
+    \item Comparer les distributions par plateforme et catégorie
+\end{enumerate}
+
+\textbf{Résultat} : Visualisation des taux d'automatisation et analyse de la carte thermique croisée permettant d'identifier les plateformes et catégories où les décisions automatisées sont disproportionnées.
+
+\subsection{CU3 : Conformité légale}
+
+\textbf{Rôle} : Journaliste d'investigation.
+
+\textbf{Question} : Quelles bases légales sont les plus fréquemment invoquées en France ?
+
+\textbf{Actions} :
+\begin{enumerate}
+    \item Filtrer par pays = FR
+    \item Consulter la section Bases juridiques (Figure~\ref{fig:legal_grounds})
+    \item Exporter le graphique en PNG pour rapport
+\end{enumerate}
+
+\textbf{Résultat} : Classement des 10 motifs de décision les plus fréquents en France, prêt à être intégré dans un article ou rapport d'investigation.
+
+\subsection{CU4 : Analyse territoriale de la modération TikTok}
+
+\textbf{Rôle} : Analyste de conformité.
+
+\textbf{Question} : Comment TikTok adapte-t-il ses décisions de modération selon les pays concernés ?
+
+\textbf{Contexte} : La variable \texttt{territorial\_scope} indique les pays où une décision s'applique. TikTok présente une forte granularité territoriale avec des milliers de combinaisons de pays. L'objectif est d'utiliser cette variable comme axe central pour analyser les différences de modération selon les territoires.
+
+\textbf{Actions} :
+\begin{enumerate}
+    \item Filtrer par plateforme = TikTok
+    \item Sélectionner un ou plusieurs pays dans \texttt{territorial\_scope}
+    \item Visualiser les distributions dans la section Répartition géographique (Figures~\ref{fig:geography} à~\ref{fig:eu_map_estonia})
+    \item Comparer les motifs de modération et bases légales
+    \item Analyser l'automatisation et l'origine des signalements
+    \item Exporter les résultats pour analyse juridique
+\end{enumerate}
+
+\textbf{Résultat} : Visualisation et statistiques agrégées permettant d'identifier des différences de modération selon les territoires et d'en comprendre les logiques juridiques ou opérationnelles.
+
+
+%%% Section 3V et Performances
+\section{Analyse des Paramètres 3V des Mégadonnées et Performances}
+
+Les mégadonnées (\textit{Big Data}) se caractérisent classiquement par trois dimensions fondamentales, désignées sous le nom de « paramètres 3V » \cite{laney2001}: le \textbf{Volume} (quantité massive de données à stocker et traiter), la \textbf{Variété} (hétérogénéité des formats, structures et sources de données), et la \textbf{Vitesse} (rapidité d'arrivée et de traitement des nouvelles données). Ce cadre d'analyse, proposé initialement par Doug Laney en 2001 \cite{laney2001}, permet d'évaluer les défis techniques posés par un jeu de données et de justifier les choix architecturaux. Nous analysons ci-dessous comment ces trois dimensions se manifestent concrètement dans le cas de la base de données de la DSA transparency et comment notre plateforme y répond.
+
+\subsection{Volume}
+
+Les données DSA représentent un défi de volumétrie considérable. Les données brutes représentent environ 1~Go compressé par jour, soit environ 22~Go une fois décompressées. L'extrapolation mensuelle donne environ 660~Go de données par mois, et la base complète dépasse les 11 milliards d'entrées.
+
+Pour notre projet, nous avons adopté une stratégie de filtrage intelligent, conservant environ 10 jours de données filtrées sur 15 plateformes représentatives, soit environ 50~Go de données exploitables correspondant à plus de 17 millions d'entrées. \textbf{Notre projet satisfait ainsi au critère « grand volume » des mégadonnées.}
+
+En termes d'extensibilité, nos mesures sur la VM N2 (4 vCPU, 16~Go RAM) montrent qu'une requête d'agrégation sur 17 millions d'entrées avec filtres composites s'exécute en moins de 2 secondes grâce aux index et vues matérialisées. En extrapolant ces performances à un matériel plus puissant -- par exemple un nœud SMP de type CRIANN (256 cœurs Intel Haswell à 2,2~GHz, 4~To de RAM) -- et en supposant une mise à l'échelle linéaire des I/O disque, notre architecture pourrait traiter la base complète de 11 milliards d'entrées (environ 500~Go décompressés pour les 6 mois de rétention) en maintenant des temps de réponse inférieurs à 10 secondes pour les requêtes analytiques courantes. Une extension vers un cluster PostgreSQL distribué (Citus, Greenplum) permettrait de traiter des volumétries encore plus importantes.
+
+\subsection{Variété}
+
+Les données présentent une hétérogénéité significative. Pour donner des quantités concrètes : notre jeu de données comprend \textbf{27 colonnes} de types variés (8 types de données distincts : \texttt{VARCHAR}, \texttt{TEXT}, \texttt{DATE}, \texttt{BOOLEAN}, \texttt{SMALLINT}, \texttt{INTEGER}, \texttt{JSONB}, \texttt{CHAR}), \textbf{24 langues} de contenu (UTF-8 multilingue : néerlandais, français, grec, allemand, maltais, etc.), \textbf{15 plateformes} aux conventions de nommage distinctes, et plus de \textbf{50 catégories de violation} différentes. Certains champs utilisent des listes JSON (\texttt{territorial\_scope} peut contenir jusqu'à 27 codes pays), d'autres des énumérations à valeur fixe. On observe en outre la présence de valeurs manquantes (\texttt{NULL}, chaînes vides, ou \texttt{NaN}) dans environ 15--20\% des enregistrements selon les champs.
+
+Notre processus ETL (extraction, transformation, chargement) normalise ces données vers un schéma relationnel optimisé via les tables de référence décrites en section~IV. \textbf{Notre projet satisfait ainsi au critère « variété » des mégadonnées.}
+
+\subsection{Vitesse}
+
+La base DSA est mise à jour quotidiennement. La rétention suit une fenêtre glissante de 6 mois, avec un flux entrant de plusieurs millions d'entrées par jour. Nous avons implémenté des déclencheurs PostgreSQL pour la mise à jour automatique et la synchronisation des tables de référence.
+
+En tant que preuve de concept à données statiques, notre système n'ingère pas les données en temps réel. Cependant, \textbf{notre projet constitue une preuve de concept pour le traitement à grande échelle des données DSA}. En extrapolant nos performances d'insertion mesurées (environ 500\,000 lignes par minute avec \texttt{\textbackslash copy}), l'ingestion quotidienne d'environ 5 millions de nouvelles entrées prendrait environ 10 minutes. Sur un nœud SMP de type CRIANN (256 cœurs), en parallélisant les insertions sur plusieurs partitions de table, ce délai pourrait être ramené à moins de 2 minutes, soit bien en deçà du cycle de mise à jour journalier. La mise en place d'un pipeline de streaming (Apache Kafka, AWS Kinesis) permettrait d'approcher une ingestion en quasi temps réel.
+
+\subsection{Environnement de production}
+
+La plateforme est déployée sur Google Cloud Platform :
+
+\begin{itemize}
+    \item \textbf{VM Google Cloud} : série N2, 4 processeurs virtuels, 16~Go de mémoire vive
+    \item \textbf{Stockage} : SSD 150~Go
+    \item \textbf{PostgreSQL} : version 17
+    \item \textbf{Accès} : serveur accessible via Internet (mandataire inverse Nginx)
+\end{itemize}
+
+Concernant le matériel physique sous-jacent, les VM de série N2 sur GCP s'appuient sur des processeurs Intel Cascade Lake (3\textsuperscript{e} génération Xeon Scalable, jusqu'à 3,1~GHz en Turbo Boost). Les benchmarks de Google indiquent des performances réseau jusqu'à 32~Gbps et une bande passante disque SSD de l'ordre de 1~Go/s en lecture séquentielle. Ces caractéristiques sont comparables à un serveur physique de milieu de gamme ; elles sont suffisantes pour notre PoC mais seraient insuffisantes pour ingérer la base complète DSA en temps réel sans partitionnement de table ni distribution horizontale.
+
+\subsection{Optimisations réalisées}
+
+\begin{enumerate}
+    \item \textbf{Pagination côté serveur} : limite par défaut à 1000 entrées par lecture
+    \item \textbf{Index composites} : accélération des requêtes filtrées
+    \item \textbf{Cache TanStack Query} : évite les requêtes redondantes (5~minutes)
+\end{enumerate}
+
+###MANU
+
+\subsection{Motivations et périmètre des mesures}
+\subsubsection{TITRE A VENIR ...}
+
+Avant de présenter les résultats de performance, il convient
+d'expliquer pourquoi leur mesure est nécessaire dans le contexte
+d'un projet mégadonnées. À cette échelle, les performances d'un
+système ne peuvent pas être simplement postulées~: elles doivent
+être mesurées empiriquement, car un comportement acceptable sur
+un jeu de quelques milliers de lignes peut se dégrader de manière
+non linéaire à mesure que le volume croît.
+
+Les sections VIII.A, VIII.B et VIII.C ont établi que notre jeu de
+données satisfait aux trois critères 3V~: plus de 17 millions
+d'entrées pour 50~Go de données exploitables (Volume), 27 colonnes
+de types hétérogènes réparties sur 15 plateformes et 24 langues
+(Variété), et un flux entrant quotidien de plusieurs millions
+d'entrées côté source (Vitesse). Notre infrastructure, volontairement
+contrainte et représentative d'un déploiement académique réaliste
+(cf.\ section~III.B.5), rend d'autant plus nécessaire la vérification
+empirique que les optimisations mises en place -- indexation, vues
+matérialisées, pagination, cache applicatif -- produisent effectivement
+les gains attendus, et l'identification des éventuels goulots
+d'étranglement pour orienter les perspectives d'amélioration.
+
+Les mesures présentées dans cette section couvrent quatre périmètres
+complémentaires, conformément aux consignes du projet~:
+
+\begin{itemize}
+    \item Les \textbf{métriques système} (CPU, RAM, réseau, conteneurs),
+    collectées en continu via notre infrastructure d'observabilité
+    décrite en F.2~;
+    \item Les \textbf{temps de réponse des requêtes} analytiques sur
+    la base PostgreSQL, en fonction du type de requête et du degré de
+    parallélisme, présentés en F.3~;
+    \item Les \textbf{performances sous charge concurrente}, simulant
+    plusieurs utilisateurs simultanés sur les points d'accès de
+    l'API, détaillées en F.4~;
+    \item Les \textbf{performances du module d'intelligence artificielle},
+    couvrant l'entraînement du modèle de classification et les temps
+    d'inférence du pipeline TALN, détaillés en F.5 et F.6.
+\end{itemize}
+
+\subsection{Infrastructure d'observabilité}
+\subsubsection{Principe général}
+Afin de surveiller l'impact de nos services sur le serveur qui les héberge, nous avons mis en place une infrastructure d'observabilité s'appuyant sur des outils largement adoptés dans l'industrie informatique. Le terme \textit{observabilité} désigne la capacité à comprendre l'état interne d'un système à partir de ses données externes mesurables -- métriques, journaux, traces. Pour un lecteur non technique, on peut la comparer à un tableau de bord de voiture : sans lui, le moteur tourne, mais on ignore s'il chauffe, si le carburant est suffisant ou si une anomalie se prépare.
+Notre pipeline d'observabilité repose sur deux outils complémentaires : \textbf{Prometheus} pour la collecte des métriques, et \textbf{Grafana} pour leur visualisation.
+Prometheus est un système de surveillance open source qui collecte périodiquement des métriques auprès de différentes sources (\textit{scraping}) et les stocke dans une base de données temporelle. Il expose un langage de requête dédié (PromQL) permettant d'interroger ces métriques avec précision. Grafana est une plateforme de visualisation qui se connecte à Prometheus -- ainsi qu'à d'autres sources de données -- pour produire des tableaux de bord graphiques dynamiques et lisibles. Comme le résume la documentation de référence du domaine : Prometheus collecte des métriques riches et fournit un langage de requête puissant, tandis que Grafana les transforme en visualisations exploitables \cite{opsramp2024}.
+\subsubsection{Architecture du pipeline}
+Notre pipeline d'observabilité distingue deux catégories de métriques, collectées depuis des sources distinctes mais convergeant vers un tableau de bord Grafana unifié.
+
+Les \textbf{métriques matérielles} concernent l'utilisation des ressources physiques de la machine virtuelle : processeur (CPU), mémoire vive (RAM), charge réseau et activité disque. Elles sont exposées par \textbf{Node Exporter}, un agent Prometheus installé sur le système hôte, qui interroge directement le noyau Linux pour remonter ces informations.
+Les \textbf{métriques logicielles} concernent le comportement de nos services applicatifs déployés sous forme de conteneurs Docker : utilisation CPU et mémoire par conteneur, activité réseau inter-conteneurs, et nombre de conteneurs actifs. Elles sont collectées par \textbf{cAdvisor} (Container Advisor), un outil développé par Google spécialisé dans la surveillance des environnements conteneurisés.
+
+L'ensemble des métriques -- matérielles et logicielles -- est centralisé dans Prometheus, qui joue le rôle d'agrégateur, avant d'être restitué graphiquement dans Grafana. La figure suivante synthétise ce pipeline :
+
+\begin{figure}[H]
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=1.4cm,
+  auto,
+  block/.style={rectangle, draw, fill=blue!20, text width=2.8cm,
+                text centered, rounded corners, minimum height=1cm},
+  arrow/.style={->, thick}
+]
+
+% Colonne gauche : sources
+\node[block, fill=green!20]  (nodeexp) {Node Exporter\\\small métriques OS};
+\node[block, fill=violet!20, below=of nodeexp] (cadvisor) {cAdvisor\\\small métriques conteneurs};
+
+% Centre : agrégateur
+\node[block, fill=orange!20, right=2.2cm of nodeexp, yshift=-0.7cm]
+      (prometheus) {Prometheus\\\small collecte \& stockage};
+
+% Droite : visualisation
+\node[block, fill=red!15, right=2.2cm of prometheus]
+      (grafana) {Grafana\\\small tableaux de bord};
+
+% Bas droite : destinataire
+\node[block, fill=gray!20, below=1.2cm of grafana]
+      (admin) {Administrateur};
+
+% Flèches
+\draw[arrow] (nodeexp)   -- node[above, sloped, font=\scriptsize]{scraping} (prometheus);
+\draw[arrow] (cadvisor)  -- node[below, sloped, font=\scriptsize]{scraping} (prometheus);
+\draw[arrow] (prometheus)-- node[above, font=\scriptsize]{PromQL} (grafana);
+\draw[arrow] (grafana)   -- (admin);
+
+\end{tikzpicture}%
+}
+\caption{Pipeline d'observabilité : collecte des métriques matérielles
+(Node Exporter) et logicielles (cAdvisor), agrégation dans Prometheus,
+et restitution graphique via Grafana.}
+\label{fig:observability-pipeline}
+\end{figure}
+\subsubsection{Choix de la conteneurisation pour le déploiement}
+L'ensemble de la stack d'observabilité (Prometheus, Grafana, cAdvisor) est déployé sous forme de conteneurs Docker, orchestrés via Docker Compose, plutôt qu'installé directement sur le système hôte. Ce choix présente plusieurs avantages concrets : il évite tout conflit de dépendances avec les services applicatifs déjà en place, garantit une installation reproductible en une seule commande, et permet de retirer ou mettre à jour les outils de surveillance sans affecter la production. Le fichier \texttt{docker-compose.yml} dédié au monitoring est maintenu séparément de celui de l'application principale, ce qui préserve la séparation des responsabilités.
+\begin{lstlisting}[language=yaml, caption={Extrait de configuration Docker Compose pour la stack d'observabilité TBC MANU}]
+services:
+prometheus:
+image: prom/prometheus:latest
+volumes:
+- ./prometheus.yml:/etc/prometheus/prometheus.yml
+ports:
+- "9090:9090"
+grafana:
+image: grafana/grafana:latest
+ports:
+- "3001:3000"
+depends_on:
+- prometheus
+cadvisor:
+image: gcr.io/cadvisor/cadvisor:latest
+volumes:
+- /:/rootfs:ro
+- /var/run:/var/run:ro
+- /sys:/sys:ro
+- /var/lib/docker/:/var/lib/docker:ro
+ports:
+- "8080:8080"
+\end{lstlisting}
+\subsubsection{Tableau de bord Grafana -- métriques système}
+
+L'interface Grafana permet de visualiser en temps réel l'ensemble
+des métriques collectées. La figure~\ref{fig:grafana-v0} présente
+le tableau de bord \textit{Node Exporter Full}, exposant les
+indicateurs système fondamentaux sur une fenêtre glissante de
+5 minutes avec rafraîchissement automatique à la minute.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{images/Grafana_v1.png}
+\caption{Tableau de bord Grafana \textit{Node Exporter Full} --
+métriques système en temps réel.}
+\label{fig:grafana-v1}
+\end{figure}
+
+La section supérieure \textit{Quick CPU / Mem / Disk} offre une
+lecture synthétique de l'état de la machine via des jauges
+instantanées, exemple: CPU Busy à 1,7\,\%, charge système à 1,0,
+RAM utilisée à 10,0\,\% (environ 1,6~Gio sur les 16~Gio
+disponibles), et SWAP non utilisée -- signe que la mémoire
+vive est suffisante pour absorber la charge applicative courante.
+La section \textit{Basic CPU / Mem / Net / Disk} détaille ces
+mêmes métriques sous forme de séries temporelles~: on observe
+un pic CPU à environ 25\,\% lors du démarrage des services, suivi d'un retour immédiat à moins de 2\,\%, ce qui
+confirme la faible empreinte de notre stack en régime établi.
+Le tableau de bord intègre également des sections plus détaillées
+-- \textit{Memory Meminfo}, \textit{Network Traffic},
+\textit{Storage Disk} -- destinées à un diagnostic approfondi
+par un public technique, sans surcharger la vue principale.
+
+Ce tableau de bord couvre la couche matérielle de la VM~;
+un second tableau de bord, dédié à la couche logicielle,
+permet de descendre au niveau de chaque conteneur Docker
+individuellement.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{images/grafana_cadvisor_v0.png}
+\caption{Tableau de bord Grafana cAdvisor -- métriques des
+conteneurs DSA en temps réel (CPU, mémoire, réseau par service).}
+\label{fig:grafana_cadvisor_v0}
+\end{figure}
+
+Ce second tableau de bord, alimenté par cAdvisor, isole la
+consommation de chaque service conteneurisé (frontend React,
+backend Express, module FastAPI/IA) et permet d'identifier
+quel conteneur est responsable d'un pic de charge observé
+dans la vue système.
+
+
+Les métriques ainsi collectées permettent de contextualiser 
+les mesures de performance applicatives présentées dans les 
+sous-sections suivantes, qui s'appuient sur des outils de mesure 
+dédiés à chaque composant du système.
+
+
+\subsection{Temps de réponse des requêtes SQL}
+
+\subsubsection{Protocole de mesure}
+
+Les mesures ont été réalisées directement sur la base PostgreSQL
+en production, hébergée sur la VM N2 (4 vCPU, 16~Go RAM, SSD
+150~Go), à l'aide de la commande \texttt{EXPLAIN ANALYZE}.
+Cet outil, intégré nativement à PostgreSQL, exécute réellement
+la requête et mesure son temps d'exécution effectif
+(\textit{Execution Time}) ainsi que le temps passé à planifier
+la stratégie d'exécution optimale (\textit{Planning Time}).
+Les mesures de performance portent sur la requête R1 et R3
+ciblant \textbf{Facebook} (\texttt{platform\_id = 54020}),
+la plateforme la plus représentée dans notre jeu de données
+avec environ 4,97 millions d'entrées -- ce choix garantit
+des mesures représentatives du cas d'usage le plus
+sollicitant en production.
+
+Afin d'évaluer le comportement du système à différentes
+échelles, un protocole de montée en charge a été mis en place
+via la clause \texttt{TABLESAMPLE BERNOULLI} de PostgreSQL,
+qui échantillonne les lignes de façon aléatoire et uniforme.
+Quatre paliers ont été testés : 1,28M, 6,21M, 12,62M lignes,
+et la table complète à \textbf{21,4 millions} d'entrées.
+Les index sur \texttt{platform\_id} ont été recréés sur chaque
+sous-table pour garantir la comparabilité des mesures.
+
+Quatre types de requêtes représentatifs des cas d'usage réels
+de la plateforme ont été sélectionnés, couvrant un spectre
+allant du filtre simple à la jointure multi-tables.
+
+
+Il convient de noter que ces mesures portent sur un
+\textbf{instantané partiel} de la base DSA Transparency,
+représentant environ 10 jours de collecte pour 15 plateformes
+(21,4 millions d'entrées, cf.\ section~VI.B). La base
+source complète dépasse 11 milliards d'entrées~; les temps
+de réponse observés ici seraient significativement plus
+élevés sur un déploiement en production ingérant l'intégralité
+du flux, et les optimisations identifiées (vues matérialisées,
+partitionnement, streaming) n'en seraient que plus nécessaires.
+
+\subsubsection{Résultats par type de requête}
+
+Le Tableau~\ref{tab:query-perf} synthétise les temps
+d'exécution mesurés sur la table complète (21,4M entrées).
+
+\begin{table}[H]
+\centering
+\caption{Temps d'exécution par type de requête (21,4M entrées,
+VM N2)}
+\label{tab:query-perf}
+\footnotesize
+\begin{tabular}{llr}
+\hline
+\textbf{Req.} & \textbf{Type} & \textbf{Exec. (ms)} \\
+\hline
+R1 & Filtre simple         &    285{,}5 \\
+R2 & Agrégation globale    & 1\,466{,}9 \\
+R3 & Filtre composite      & 1\,680{,}2 \\
+R4 & Jointure multi-tables & 3\,734{,}2 \\
+\hline
+\end{tabular}
+\end{table}
+
+Le filtre simple (R1, 285~ms) exploite l'index B-tree sur
+\texttt{platform\_id} : PostgreSQL localise directement les
+entrées de Facebook sans parcourir la table en entier.
+Le temps, plus élevé qu'un filtre sur une petite plateforme,
+reflète le volume intrinsèque de Facebook -- près de 5 millions
+d'entrées sur les 21,4 millions totaux.
+
+L'agrégation globale (R2, 1\,467~ms) impose un parcours
+séquentiel de l'intégralité de la table pour calculer les
+comptages par plateforme. Ce résultat reste néanmoins
+acceptable pour une requête analytique lourde sur un tel
+volume. PostgreSQL active la compilation JIT
+(\textit{Just-In-Time}) pour cette requête, compilant
+dynamiquement certaines parties du plan d'exécution en
+code machine natif afin d'accélérer les traitements
+arithmétiques intensifs.
+
+La requête composite (R3, 1\,680~ms) est légèrement plus
+lente que R2 sur ce jeu de données. Contrairement à ce que
+l'on pourrait attendre, le filtre \texttt{WHERE platform\_id
+= 54020} ne réduit pas suffisamment le volume de lignes
+pour compenser le coût du \texttt{GROUP BY} supplémentaire
+sur \texttt{category\_id} : Facebook représente à elle
+seule près de 23\,\% de la table, ce qui limite l'effet
+de sélectivité de l'index.
+
+La jointure (R4, 3\,734~ms) est la requête la plus coûteuse.
+Elle combine un parcours séquentiel de la table principale
+avec une opération de jointure par hachage
+(\textit{hash join}) sur la table \texttt{platforms}.
+C'est précisément pour éviter ce type de coût en production
+que des vues matérialisées sont prévues dans
+l'architecture (cf.\ section~IV) -- leur déploiement
+constitue un axe d'amélioration prioritaire identifié
+en section~X.
+
+\subsubsection{Scalabilité selon le volume de données}
+
+Le Tableau~\ref{tab:scalability} présente l'évolution des
+temps d'exécution en fonction du volume de données,
+pour les quatre types de requêtes.
+
+\begin{table}[H]
+\centering
+\caption{Évolution des temps d'exécution selon le volume
+(Execution Time en ms)}
+\label{tab:scalability}
+\footnotesize
+\begin{tabular}{lrrrr}
+\hline
+\textbf{Volume} & \textbf{R1} & \textbf{R2} &
+\textbf{R3} & \textbf{R4} \\
+\hline
+1,3M  &    22{,}1 &    90{,}7 & 158{,}0 &   228{,}7 \\
+6,2M  &   463{,}8 &   814{,}0 &   584{,}9 & 1\,404{,}8 \\
+12,6M &   964{,}9 & 1\,626{,}7 & 1\,098{,}7 & 2\,566{,}9 \\
+21,4M &   285{,}5 & 1\,466{,}9 & 1\,680{,}2 & 3\,734{,}2 \\
+\hline
+\end{tabular}
+\end{table}
+
+Pour R2 et R4, la progression est globalement croissante
+avec le volume, ce qui correspond au comportement attendu
+d'une requête à parcours séquentiel. R1 présente un
+comportement non-monotone : très rapide à 1,3M (22~ms)
+grâce à l'index qui ramène peu de résultats -- Facebook
+étant peu représentée dans ce petit échantillon -- puis
+croissant jusqu'à 12,6M, avant de redescendre à 285~ms
+sur la table complète. Ce dernier point s'explique par
+le fait que sur la table complète, les statistiques
+PostgreSQL sont à jour et le planificateur choisit
+la stratégie optimale, contrairement aux sous-tables
+créées par échantillonnage dont les statistiques sont
+moins précises.
+
+La requête composite (R3, 1\,680~ms sur 21,4M entrées)
+progresse de manière régulière avec le volume~: 158~ms
+à 1,3M lignes, 585~ms à 6,2M, 1\,099~ms à 12,6M, puis
+1\,680~ms sur la table complète. Cette croissance
+quasi-linéaire confirme que le filtre \texttt{WHERE
+platform\_id = 54020} réduit efficacement le périmètre
+de l'agrégation, mais que Facebook représentant environ
+23\,\% de la table complète, le gain de sélectivité
+reste limité sur les grands volumes.
+
+\subsubsection{Impact du nombre de c\oe{}urs}
+
+La VM N2 disposant de 4 processeurs virtuels, nous avons
+mesuré l'impact de la parallélisation sur R2 en faisant
+varier le paramètre \texttt{max\_parallel\_workers\_per\_gather}.
+
+\begin{table}[H]
+\centering
+\caption{Impact du parallélisme sur R2 (agrégation globale,
+21,4M entrées)}
+\label{tab:cores-perf}
+\footnotesize
+\begin{tabular}{crr}
+\hline
+\textbf{C\oe{}urs} & \textbf{Exec. (ms)} & \textbf{Facteur} \\
+\hline
+1 & 2\,610{,}6 & $\times$1{,}00 \\
+2 & 1\,461{,}9 & $\times$1{,}79 \\
+4 & 1\,481{,}4 & $\times$1{,}76 \\
+\hline
+\end{tabular}
+\end{table}
+
+Les résultats confirment un gain quasi-linéaire entre 1 et
+2 cœurs (facteur 1,79), caractéristique d'une bonne
+parallélisation de la phase d'agrégation. En revanche,
+le passage de 2 à 4 cœurs n'apporte aucune amélioration
+supplémentaire -- le temps remonte même légèrement de
+1\,462~ms à 1\,481~ms. Ce phénomène illustre la
+\textit{loi d'Amdahl} : la fraction non parallélisable
+de la requête (coordination des workers, fusion des
+résultats partiels, accès disque séquentiel) devient
+le facteur limitant au-delà de 2 cœurs. Sur notre VM
+à 4 vCPU avec un SSD partagé, la bande passante disque
+constitue vraisemblablement ce goulot d'étranglement.
+
+
+###MANU
+
+\section{Considérations RGPD}
+
+\subsection{Données personnelles}
+
+Bien que les données DSA soient anonymisées (pas d'identifiants utilisateurs directs), certains risques subsistent :
+
+\begin{itemize}
+    \item \textbf{Réidentification} : croisement de données agrégées avec sources externes
+    \item \textbf{Données sensibles} : catégories de violation pouvant révéler des informations sur les utilisateurs
+    \item \textbf{Portée territoriale} : informations géographiques granulaires
+\end{itemize}
+
+\subsection{Mesures implémentées et leur effet}
+
+\begin{enumerate}
+    \item \textbf{Pas de stockage d'identifiants utilisateurs} : notre plateforme ne collecte ni ne conserve aucune donnée relative aux utilisateurs qui la consultent (pas de compte, pas de cookie de traçage, pas de journalisation des requêtes nominatives). Ceci élimine le risque de constitution d'un profil d'utilisation à des fins commerciales ou de surveillance.
+    \item \textbf{Agrégation des données pour les visualisations} : toutes les visualisations présentent des statistiques agrégées (comptages, pourcentages, moyennes) et jamais des enregistrements individuels nominatifs. Cette mesure réduit le risque de réidentification à partir des données DSA affichées.
+    \item \textbf{Accès contrôlé à la base de données} : la base de données PostgreSQL n'est pas directement exposée sur Internet ; seul le serveur applicatif y accède via un compte dédié (\texttt{dsa\_admin}) aux privilèges limités. Cette séparation protège contre les accès non autorisés et les injections SQL.
+\end{enumerate}
+
+Nous recommandons, pour une version de production, de contacter le Délégué à la Protection des Données de l'UPEC (\texttt{dpo@u-pec.fr}) afin d'obtenir un avis expert sur le statut d'anonymisation des données DSA dans notre contexte d'utilisation spécifique, notamment en ce qui concerne l'utilisation de l'API Gemini (Google) pour le traitement des requêtes utilisateurs.
+
+%%% Captures d'écran
+\newpage
+\onecolumn
+
+\section*{Figures et captures d'écran de la plateforme}
+\addcontentsline{toc}{section}{Figures et captures d'écran}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.95\textwidth]{images/overview_timeseries.png}}
+\caption{Section Vue d'ensemble et Séries temporelles -- Indicateurs clés (5\,000 actions, 8 plateformes, délai moyen 369,5 jours, détection automatisée 60,9\%, décision automatisée 50,5\%, 27 pays) et séries temporelles des actions mensuelles et du délai de réponse moyen. \textit{Perspective utilisateur (CU2 -- Régulateur)} : un régulateur consulte d'abord ces indicateurs pour établir un état des lieux global avant d'affiner son analyse par plateforme ou catégorie.}
+\label{fig:overview_timeseries}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.95\textwidth]{images/actions_by_platform.png}}
+\caption{Évolution mensuelle des actions de modération par plateforme (LinkedIn, Meta, TikTok, YouTube, Snapchat, X, Pinterest, Amazon) de janvier 2024 à décembre 2025. \textit{Perspective utilisateur (CU1 -- Chercheur)} : après avoir sélectionné TikTok dans les filtres, le chercheur isole la courbe TikTok pour observer les pics d'activité mensuels et les corréler avec des événements réglementaires ou médiatiques.}
+\label{fig:actions_by_platform}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.95\textwidth]{images/platform_comparison.png}}
+\caption{Section Comparaison des plateformes -- Volumes par plateforme (barres horizontales), types de décision empilés par plateforme, et radar des profils de catégories pour les 3 premières plateformes (X, Pinterest, LinkedIn). \textit{Perspective utilisateur (CU1 -- Chercheur)} : la vue radar permet de comparer rapidement si TikTok et Meta présentent des profils de catégories similaires ou distincts, ce qui renseigne sur leurs politiques de modération respectives.}
+\label{fig:platform_comparison}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.95\textwidth]{images/legal_grounds.png}}
+\caption{Section Bases juridiques -- Classement des 10 motifs de décision les plus fréquemment cités et répartition entre base légale (616) et conditions d'utilisation (384). \textit{Perspective utilisateur (CU3 -- Journaliste)} : après filtrage sur la France, le journaliste identifie que la \textit{Directive 2011/93/UE} (protection de l'enfance) et le \textit{Droit de propriété intellectuelle} figurent parmi les premiers motifs invoqués, puis exporte ce graphique pour son article.}
+\label{fig:legal_grounds}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.95\textwidth]{images/treemap_categories.png}}
+\caption{Arbre hiérarchique -- Vue des catégories de contenu réparties au sein de chaque motif de décision. Chaque bloc de couleur représente un motif légal, subdivisé en catégories de violation. \textit{Perspective utilisateur (CU3 -- Journaliste)} : cette vue permet d'identifier visuellement quelles catégories de contenu (Fraude, Violence, Harcèlement) sont les plus souvent traitées sous un fondement légal vs contractuel.}
+\label{fig:treemap}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.95\textwidth]{images/geographic_distribution.png}}
+\caption{Section Répartition géographique -- Diagramme en rose de la distribution par pays de l'UE (27 États membres) et classement des pays les plus affectés par les décisions de modération (BE : 55, PT : 49, GR : 47, etc.). \textit{Perspective utilisateur (CU4 -- Analyste de conformité)} : l'analyste compare la position de différents pays pour détecter des disparités de modération territoriale potentiellement liées aux capacités de signalement ou aux contextes réglementaires locaux.}
+\label{fig:geography}
+\end{figure}
+
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.95\textwidth]{images/eu_map_overview.jpeg}}
+\caption{Carte choroplèthe interactive de l'UE -- Vue d'ensemble de l'activité de modération dans les 27 États membres. L'intensité de la couleur bleue reflète le volume d'actions de modération par pays (échelle de 0 à 52). \textit{Perspective utilisateur (CU4)} : l'analyste survole la carte pour identifier rapidement les pays à fort volume avant de cliquer sur chacun pour afficher les détails.}
+\label{fig:eu_map_overview}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.95\textwidth]{images/eu_map_france.jpeg}}
+\caption{Carte interactive -- Détails pour la France : 38 actions, détection IA 66\%, décision IA 45\%, délai moyen 368,4 jours, catégorie dominante Fraude/Arnaque (\textit{Scam/Fraud}), plateforme principale Pinterest. \textit{Perspective utilisateur (CU4)} : l'analyste note que pour la France le taux de décision automatisée (45\%) est inférieur au taux de détection (66\%), ce qui suggère qu'une proportion significative de cas détectés par IA font l'objet d'une revue humaine avant décision.}
+\label{fig:eu_map_france}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.95\textwidth]{images/eu_map_estonia.jpeg}}
+\caption{Carte interactive -- Détails pour l'Estonie : 25 actions, détection IA 48\%, décision IA 40\%, délai moyen 359 jours, catégorie dominante Harcèlement (\textit{Harassment}), plateforme principale Amazon. \textit{Perspective utilisateur (CU1)} : en comparant l'Estonie à la France, le chercheur observe que les catégories dominantes diffèrent (Harcèlement vs Fraude), ce qui soulève des questions sur les facteurs culturels ou démographiques expliquant cette différence.}
+\label{fig:eu_map_estonia}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.95\textwidth]{images/actions_by_language.png}}
+\caption{Distribution des actions de modération par langue du contenu -- Les langues les plus représentées sont le néerlandais (NL), le français (FR), le grec (EL), l'allemand (DE) et le maltais (MT). \textit{Perspective utilisateur (CU1)} : la prédominance du néerlandais et du maltais (pays de petite taille) peut indiquer un biais d'échantillonnage ou une particularité des pratiques de signalement dans ces pays, un sujet d'investigation pertinent pour un chercheur.}
+\label{fig:language}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.7\textwidth]{images/content_type_analysis.png}}
+\caption{Section Type de contenu -- Types de décision (restriction d'âge, démonétisation, avertissement, restriction de visibilité, suspension de compte, blocage géographique, suppression) ventilés par format de contenu (histoire/vidéo courte, texte, diffusion en direct, image, vidéo, audio). \textit{Perspective utilisateur (CU2)} : le régulateur observe que les vidéos font l'objet d'un éventail plus large de types de décision, ce qui peut refléter la diversité des règles applicables aux contenus audiovisuels.}
+\label{fig:content_type}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.48\textwidth]{images/filters_panel1.png}
+\hfill
+\includegraphics[width=0.48\textwidth]{images/filters_panel2.png}
+\caption{Panneau de filtres multi-critères -- À gauche : plage de dates, plateformes, catégories, types de décision et bases juridiques. À droite : pays (27 codes ISO), types de contenu, détection automatisée et décision automatisée avec boutons de réinitialisation et d'application. \textit{Perspective utilisateur} : ce panneau est le point d'entrée principal de tous les cas d'usage -- l'utilisateur configure ici ses critères avant de naviguer entre les sections d'analyse.}
+\label{fig:filters}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\fbox{\includegraphics[width=0.45\textwidth, height=0.75\textheight, keepaspectratio]{images/dashboard_full.png}}
+\caption{Vue d'ensemble complète du tableau de bord de la DSA transparency -- de haut en bas : Vue d'ensemble, Séries temporelles, Comparaison des plateformes, Bases juridiques (avec treemap), Automatisation (heatmap), Répartition géographique, Type de contenu, et Qualité des données. Cette capture illustre la cohérence visuelle de l'interface et la richesse fonctionnelle accessible depuis un seul écran de navigation.}
+\label{fig:dashboard_full}
+\end{figure}
+
+\twocolumn
+
+\appendix
+
+\section{Référence de l'API}
+
+\subsection{Points d'accès de consultation}
+
+\begin{table}[H]
+\centering
+\caption{Points d'accès GET de l'API REST}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{|l|l|p{4cm}|}
+\hline
+\textbf{Méthode} & \textbf{Point d'accès} & \textbf{Description} \\
+\hline
+GET & /api/moderation & Liste paginée des entrées avec filtres \\
+\hline
+GET & /api/moderation/stats & Statistiques agrégées \\
+\hline
+GET & /api/filters & Options de filtres disponibles \\
+\hline
+GET & /api/verification & Rapport de qualité des données \\
+\hline
+GET & /health & Vérification de l'état du service \\
+\hline
+\end{tabular}%
+}
+\end{table}
+
+\subsection{Points d'accès TALN et administration}
+
+Les points d'accès suivants ont été développés côté serveur applicatif pour les fonctionnalités avancées d'intelligence artificielle et d'administration. Ces API sont fonctionnelles mais ne sont pas encore exposées dans l'interface de la couche présentation.
+
+\vspace{0.3cm}
+\noindent
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{|l|l|p{5.5cm}|}
+\hline
+\textbf{Méth.} & \textbf{Point d'accès} & \textbf{Description} \\
+\hline
+POST & /nlp/decision & Analyse une phrase via Gemini, reconstruit les caractéristiques et prédit la décision. Entrée : \texttt{text}. Retour : \texttt{raw\_output}. \\
+\hline
+POST & /nlp/sql & Génère du SQL depuis le langage naturel via le référentiel et schéma DSA. Entrée : \texttt{text}. Retour : \texttt{sql}. \\
+\hline
+POST & /admin/ref-values & Régénère le JSON des valeurs de référence DSA. \\
+\hline
+POST & /admin/prompt & Régénère l'invite depuis les attributs de la table DSA Decision. \\
+\hline
+\end{tabular}%
+}
+\captionof{table}{Points d'accès TALN et administration (serveur applicatif)}
+\label{tab:api_nlp_admin}
+\vspace{0.3cm}
+
+Ces points d'accès permettent notamment :
+\begin{itemize}
+    \item \textbf{Prédiction interactive} : un utilisateur peut décrire une situation en langage naturel et obtenir une prédiction de décision de modération
+    \item \textbf{Requêtes en langage naturel} : transformation automatique de questions en requêtes SQL exploitables
+    \item \textbf{Maintenance des référentiels} : mise à jour automatique des fichiers de configuration utilisés par les modèles TALN
+\end{itemize}
+
+
+%%% CONCLUSION
+\section{Conclusion}
+
+Nous concluons ce rapport en résumant les contributions de notre projet et en présentant les perspectives futures.
+
+Ce travail a été réalisé dans le cadre du cours mégadonnées du diplôme de Master~2 Logiciels Sûrs de l'Université Paris-Est Créteil (UPEC), promotion 2025-2026. Il a permis de développer une plateforme complète d'analyse à interface et visualisation graphiques de la base de données de la DSA transparency, répondant aux objectifs initiaux. La plateforme offre une interface intuitive ne nécessitant aucune programmation, avec huit sections d'analyse interactive, un filtrage multi-critères dynamique et des visualisations exportables. Un module innovant à base d'apprentissage automatique permet de prédire le type de décision de modération avec une exactitude de 98\%, et un module de TALN permet de formuler des requêtes analytiques en langage naturel sans aucune connaissance en SQL. Notre outil est utilisable sans formation préalable et répond à plusieurs cas d'utilisation concrets pour les chercheurs en droit du numérique, les régulateurs, les journalistes d'investigation et les analystes de conformité.
+
+En termes de performances mesurées, la plateforme traite plus de 17 millions d'entrées sur une VM N2 (4 vCPU, 16~Go RAM, SSD 150~Go) avec des temps de réponse inférieurs à 2 secondes pour les requêtes agrégées filtrées. L'ingestion initiale de l'ensemble du jeu de données (50~Go, 17 millions de lignes) a été réalisée en moins de 3 heures via l'import natif PostgreSQL \texttt{\textbackslash copy}. Ces mesures confirment l'adéquation de notre architecture pour les volumes DSA d'une fenêtre glissante de 10 jours.
+
+Cependant, certaines limitations subsistent. La principale difficulté concerne le volume très important des données issues de la plateforme DSA Transparency, ce qui a engendré des contraintes significatives en termes de stockage et de gestion, nécessitant des ressources adaptées et impliquant des coûts supplémentaires. Par ailleurs, la manipulation de ces grandes quantités de données impacte les performances lors des phases de traitement et d'entraînement.
+
+En outre, la fenêtre de données est limitée à 6 mois en raison d'une contrainte de l'API, certaines classes rares restent difficiles à prédire par le modèle d'apprentissage automatique, et la carte géographique réelle n'a pas été intégrée faute de données GeoJSON.
+
+\section{Perspectives}
+
+Malgré les performances élevées obtenues et la richesse fonctionnelle de la plateforme, plusieurs axes d'amélioration et d'évolution ont été identifiés.
+
+\subsection{Amélioration des exportations}
+
+À ce stade, la plateforme permet uniquement l'export des analyses au format PNG. Une évolution naturelle consiste à intégrer des exports aux formats CSV et PDF afin de faciliter la réutilisation des données, leur partage, ainsi que leur intégration dans des rapports académiques, juridiques ou professionnels.
+
+\subsection{Amélioration des modèles d'apprentissage automatique}
+
+Le modèle actuel atteint une précision de 98\% pour une classification en 10 classes. Plusieurs pistes d'amélioration sont envisagées :
+\begin{itemize}
+    \item Tester des modèles plus avancés (réseaux de neurones profonds, modèles de type \textit{Transformer} \cite{sklearn})
+    \item Améliorer la gestion du déséquilibre des classes
+    \item Mettre en place une validation croisée afin de renforcer la robustesse et la généralisation du modèle
+\end{itemize}
+
+\subsection{Extension du module TALN}
+
+Le module de traitement automatique du langage naturel permet actuellement de générer les constructions SQL fondamentales (\texttt{SELECT}, \texttt{GROUP BY}, \texttt{JOIN}, agrégations). Des améliorations futures incluent :
+\begin{itemize}
+    \item Améliorer la compréhension sémantique des requêtes complexes (sous-requêtes corrélées, requêtes multi-intentions)
+    \item Ajouter un système d'explication des requêtes générées pour renforcer la transparence vis-à-vis des utilisateurs non-SQL
+    \item Estimer les ressources nécessaires : la génération SQL en temps réel via Gemini requiert environ 200~ms par requête et consomme $\sim$500 tokens par appel API ; une montée en charge à 100 utilisateurs simultanés nécessiterait environ 2 instances du module IA en parallèle
+\end{itemize}
+
+\subsection{Temps réel et mise à jour continue}
+
+Une autre perspective importante est l'intégration d'un pipeline de traitement en quasi temps réel permettant d'ingérer automatiquement les nouvelles données DSA (environ 5 millions d'entrées par jour). Cela pourrait être réalisé via des systèmes de streaming de données (Apache Kafka \cite{nodejs}, AWS Kinesis), couplés à des tâches planifiées et des mécanismes d'ingestion incrémentale.
+
+\subsection{Amélioration de l'expérience utilisateur}
+
+Des améliorations ergonomiques peuvent être apportées \cite{echarts}, notamment :
+\begin{itemize}
+    \item Personnalisation des tableaux de bord par profil d'utilisateur (juriste, journaliste, régulateur)
+    \item Sauvegarde des filtres utilisateurs entre sessions
+    \item Ajout de recommandations automatiques basées sur les usages et les analyses précédentes
+\end{itemize}
+
+\section*{Remerciements}
+
+Nous tenons à remercier chaleureusement M. Gaétan Hains et M. Pierre Valarcher, nos encadrants pédagogiques, pour leur direction scientifique, leurs conseils, leur disponibilité et leurs retours constructifs tout au long de ce projet.
+
+%%% BIBLIOGRAPHIE
+\begin{thebibliography}{00}
+
+\bibitem{dsa2022} Règlement (UE) 2022/2065 du Parlement européen et du Conseil du 19 octobre 2022 relatif à un marché unique des services numériques (Digital Services Act).
+
+\bibitem{dsadb} Commission Européenne, ``DSA Transparency Database,'' [En ligne]. Disponible: \url{https://transparency.dsa.ec.europa.eu/}
+
+\bibitem{directive2011} Directive 2011/93/UE du Parlement européen et du Conseil du 13 décembre 2011 relative à la lutte contre les abus sexuels et l'exploitation sexuelle des enfants, ainsi que la pédopornographie (CSAM).
+
+\bibitem{rgpd} Règlement (UE) 2016/679 du Parlement européen et du Conseil du 27 avril 2016 relatif à la protection des personnes physiques à l'égard du traitement des données à caractère personnel (RGPD).
+
+\bibitem{iso3166} Organisation internationale de normalisation, ``ISO 3166-1:2020 -- Codes pour la représentation des noms de pays et de leurs subdivisions,'' [En ligne]. Disponible: \url{https://www.iso.org/iso-3166-country-codes.html}
+
+\bibitem{iso639} Organisation internationale de normalisation, ``ISO 639-1:2002 -- Codes pour la représentation des noms de langues,'' [En ligne]. Disponible: \url{https://www.iso.org/iso-639-language-code}
+
+\bibitem{rfc4122} P. Leach, M. Mealling, R. Salz, ``A Universally Unique IDentifier (UUID) URN Namespace,'' RFC 4122, IETF, juillet 2005. [En ligne]. Disponible: \url{https://tools.ietf.org/html/rfc4122}
+
+\bibitem{react} Meta, ``React -- Bibliothèque JavaScript pour la construction d'interfaces utilisateur,'' [En ligne]. Disponible: \url{https://react.dev/}
+
+\bibitem{echarts} Apache Software Foundation, ``Apache ECharts,'' [En ligne]. Disponible: \url{https://echarts.apache.org/}
+
+\bibitem{prisma} Prisma, ``ORM nouvelle génération pour Node.js et TypeScript,'' [En ligne]. Disponible: \url{https://www.prisma.io/}
+
+\bibitem{postgresql} PostgreSQL Global Development Group, ``PostgreSQL: The World's Most Advanced Open Source Relational Database,'' [En ligne]. Disponible: \url{https://www.postgresql.org/}
+
+\bibitem{sklearn} F.~Pedregosa \textit{et al.}, ``Scikit-learn: Machine Learning in Python,'' \textit{Journal of Machine Learning Research}, vol.~12, pp.~2825--2830, 2011.
+
+\bibitem{vite} E.~You, ``Vite -- Outillage nouvelle génération pour le développement web,'' [En ligne]. Disponible: \url{https://vitejs.dev/}
+
+\bibitem{tanstack} T.~Linsley, ``TanStack Query -- Gestion asynchrone d'état,'' [En ligne]. Disponible: \url{https://tanstack.com/query/}
+
+\bibitem{gemini} Google, ``Documentation de l'API Gemini,'' [En ligne]. Disponible: \url{https://ai.google.dev/docs}
+
+\bibitem{fastapi} S.~Ramírez, ``FastAPI -- Cadriciel web moderne et rapide pour Python,'' [En ligne]. Disponible: \url{https://fastapi.tiangolo.com/}
+
+\bibitem{docker} Docker Inc., ``Documentation Docker,'' [En ligne]. Disponible: \url{https://docs.docker.com/}
+
+\bibitem{nodejs} OpenJS Foundation, ``Node.js -- Environnement d'exécution JavaScript,'' [En ligne]. Disponible: \url{https://nodejs.org/}
+
+\bibitem{expressjs} OpenJS Foundation, ``Express.js -- Cadriciel web minimaliste pour Node.js,'' [En ligne]. Disponible: \url{https://expressjs.com/}
+
+\bibitem{mysql} Oracle Corporation, ``MySQL -- Système de gestion de base de données relationnelle,'' [En ligne]. Disponible: \url{https://www.mysql.com/}
+
+\bibitem{sqlite} D.~R.~Hipp, ``SQLite -- Base de données embarquée,'' [En ligne]. Disponible: \url{https://www.sqlite.org/}
+
+\bibitem{aws} Amazon Web Services, ``Documentation AWS,'' [En ligne]. Disponible: \url{https://docs.aws.amazon.com/}
+
+\bibitem{azure} Microsoft, ``Documentation Microsoft Azure,'' [En ligne]. Disponible: \url{https://docs.microsoft.com/azure/}
+
+\bibitem{gcp} Google, ``Documentation Google Cloud Platform,'' [En ligne]. Disponible: \url{https://cloud.google.com/docs}
+
+\bibitem{laney2001} D.~Laney, ``3D Data Management: Controlling Data Volume, Velocity and Variety,'' META Group Research Note, 2001. [En ligne]. Disponible: \url{https://blogs.gartner.com/doug-laney/files/2012/01/ad949-3D-Data-Management-Controlling-Data-Volume-Velocity-and-Variety.pdf}
+
+\bibitem{juba2015} S.~Juba, A.~Vannahme, ``Learning PostgreSQL,'' Packt Publishing, 2015.
+
+\end{thebibliography}
+
+\end{document}
