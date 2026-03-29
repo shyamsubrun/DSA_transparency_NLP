@@ -9,7 +9,6 @@ import { LegalGroundsSection } from '../Sections/LegalGroundsSection';
 import { AutomationSection } from '../Sections/AutomationSection';
 import { GeographySection } from '../Sections/GeographySection';
 import { ContentTypeSection } from '../Sections/ContentTypeSection';
-import { DataQualitySection } from '../Sections/DataQualitySection';
 import { CustomQuerySection } from '../Sections/CustomQuerySection';
 import { useFilteredData } from '../../hooks/useFilteredData';
 import styles from './Dashboard.module.css';
@@ -136,7 +135,6 @@ export function Dashboard() {
           <AutomationSection />
           <GeographySection />
           <ContentTypeSection />
-          <DataQualitySection />
         </div>
       </main>
 

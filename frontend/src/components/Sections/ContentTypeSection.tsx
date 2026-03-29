@@ -91,101 +91,6 @@ export function ContentTypeSection() {
   };
   const pieOption = getResponsivePieChartOptions(pieOptionBase, screenSize);
 
-  // Scatter: Content type vs average delay
-  const delayData = Object.entries(aggregations.delayByContentType).map(([type, data]) => ({
-    type,
-    avgDelay: Math.round((data.total / data.count) * 10) / 10,
-    count: data.count,
-  }));
-
-  const scatterOptionBase = {
-    ...baseChartOptions,
-    tooltip: {
-      trigger: 'item',
-      formatter: (params: { data: [string, number, number] }) => {
-        return `${params.data[0]}<br/>Avg Delay: <strong>${params.data[1]} days</strong><br/>Actions: ${params.data[2]}`;
-      },
-    },
-    xAxis: {
-      type: 'category',
-      data: delayData.map(d => d.type),
-      axisLine: { lineStyle: { color: '#e2e8f0' } },
-      axisLabel: { color: '#64748b', fontSize: 11, rotate: screenSize === 'mobile' ? 45 : 0 },
-    },
-    yAxis: {
-      type: 'value',
-      name: 'Average Delay (days)',
-      nameTextStyle: { color: '#64748b', fontSize: 11 },
-      axisLine: { show: false },
-      axisLabel: { color: '#64748b', fontSize: 11 },
-      splitLine: { lineStyle: { color: '#f1f5f9' } },
-    },
-    series: [{
-      type: 'scatter',
-      data: delayData.map((d, idx) => ({
-        value: [d.type, d.avgDelay, d.count],
-        symbolSize: screenSize === 'mobile' 
-          ? Math.min(Math.max(d.count / 8, 10), 30)
-          : Math.min(Math.max(d.count / 5, 15), 50),
-        itemStyle: { color: CHART_COLORS[idx % CHART_COLORS.length] },
-      })),
-      label: {
-        show: screenSize !== 'mobile',
-        formatter: (params: { data: { value: [string, number, number] } }) => `${params.data.value[1]}d`,
-        position: 'top',
-        fontSize: 10,
-        color: '#64748b',
-      },
-    }],
-  };
-  const scatterOption = getResponsiveChartOptions(scatterOptionBase, screenSize);
-
-  // Content type efficiency (delay vs volume)
-  const efficiencyOptionBase = {
-    ...baseChartOptions,
-    legend: {
-      show: false,
-    },
-    xAxis: {
-      type: 'value',
-      name: 'Volume (actions)',
-      nameLocation: 'center',
-      nameGap: screenSize === 'mobile' ? 20 : 30,
-      nameTextStyle: { color: '#64748b', fontSize: 11 },
-      axisLine: { lineStyle: { color: '#e2e8f0' } },
-      axisLabel: { color: '#64748b', fontSize: 11 },
-    },
-    yAxis: {
-      type: 'value',
-      name: 'Avg Delay (days)',
-      nameTextStyle: { color: '#64748b', fontSize: 11 },
-      axisLine: { show: false },
-      axisLabel: { color: '#64748b', fontSize: 11 },
-      splitLine: { lineStyle: { color: '#f1f5f9' } },
-    },
-    series: [{
-      type: 'scatter',
-      symbolSize: screenSize === 'mobile' ? 15 : 20,
-      data: delayData.map((d, idx) => ({
-        value: [d.count, d.avgDelay],
-        name: d.type,
-        itemStyle: { 
-          color: CHART_COLORS[idx % CHART_COLORS.length],
-          shadowBlur: screenSize === 'mobile' ? 5 : 10,
-          shadowColor: 'rgba(0,0,0,0.1)',
-        },
-      })),
-      label: {
-        show: screenSize !== 'mobile',
-        formatter: (params: { name: string }) => params.name,
-        position: 'right',
-        fontSize: 10,
-        color: '#64748b',
-      },
-    }],
-  };
-  const efficiencyOption = getResponsiveChartOptions(efficiencyOptionBase, screenSize);
-
   return (
     <section className={styles.section}>
       <div className={styles.header}>
@@ -207,18 +112,6 @@ export function ContentTypeSection() {
           title="Content Type Distribution"
           subtitle="Share of each content format"
           option={pieOption}
-          containerSize="default"
-        />
-        <ChartWithExport
-          title="Response Delay by Content Type"
-          subtitle="Average days to action (bubble size = volume)"
-          option={scatterOption}
-          containerSize="default"
-        />
-        <ChartWithExport
-          title="Volume vs Delay"
-          subtitle="Efficiency analysis by content type"
-          option={efficiencyOption}
           containerSize="default"
         />
       </div>
