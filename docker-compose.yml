@@ -36,6 +36,8 @@ services:
         - VITE_USE_MOCK_DATA=${VITE_USE_MOCK_DATA:-true}
         # Max 200000 côté frontend (mockData.ts).
         - VITE_MOCK_DATA_SIZE=${VITE_MOCK_DATA_SIZE:-200000}
+        # Même logique que frontend/.env : volume cible pour l’échelle des graphiques (mock).
+        - VITE_MOCK_TARGET_TOTAL=${VITE_MOCK_TARGET_TOTAL:-17000000}
     container_name: dsa-frontend
     ports:
       - "80:80"

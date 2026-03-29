@@ -26,9 +26,12 @@ ARG VITE_API_BASE_URL=/api
 ARG VITE_USE_MOCK_DATA=true
 # Taille du jeu mock généré au build (dans l’app: 500–200_000).
 ARG VITE_MOCK_DATA_SIZE=200000
+# Échelle d’affichage (ex. 17M actions comme le rapport) — optionnel, 1 si vide.
+ARG VITE_MOCK_TARGET_TOTAL=17000000
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_USE_MOCK_DATA=$VITE_USE_MOCK_DATA
 ENV VITE_MOCK_DATA_SIZE=$VITE_MOCK_DATA_SIZE
+ENV VITE_MOCK_TARGET_TOTAL=$VITE_MOCK_TARGET_TOTAL
 RUN npm run build
 
 # Stage 2: Serve with Nginx
