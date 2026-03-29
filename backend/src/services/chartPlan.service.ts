@@ -112,6 +112,22 @@ function normalizeConstraintValues(raw: unknown): string[] | undefined {
   return [...new Set(cleaned)].slice(0, MAX_CONSTRAINT_VALUES);
 }
 
+function normalizeBooleanToken(value: string): 'Yes' | 'No' | null {
+  const normalized = normalizeTextForMatch(value).trim();
+  if (['yes', 'oui', 'true', '1', 'vrai'].includes(normalized)) return 'Yes';
+  if (['no', 'non', 'false', '0', 'faux'].includes(normalized)) return 'No';
+  return null;
+}
+
+function normalizeBooleanConstraintValues(raw?: string[]): string[] | undefined {
+  if (!raw || !raw.length) return undefined;
+  const mapped = raw
+    .map((value) => normalizeBooleanToken(value))
+    .filter((v): v is 'Yes' | 'No' => v !== null);
+  if (!mapped.length) return undefined;
+  return [...new Set(mapped)];
+}
+
 function normalizeConstraints(raw: unknown): ChartAggregationConstraints | undefined {
   if (!raw || typeof raw !== 'object') {
     return undefined;
@@ -121,8 +137,12 @@ function normalizeConstraints(raw: unknown): ChartAggregationConstraints | undef
     if (!MOCK_DIMENSIONS.has(dimension) || !value || typeof value !== 'object') {
       continue;
     }
-    const include = normalizeConstraintValues((value as Record<string, unknown>).include);
-    const exclude = normalizeConstraintValues((value as Record<string, unknown>).exclude);
+    let include = normalizeConstraintValues((value as Record<string, unknown>).include);
+    let exclude = normalizeConstraintValues((value as Record<string, unknown>).exclude);
+    if (dimension === 'automated_detection' || dimension === 'automated_decision') {
+      include = normalizeBooleanConstraintValues(include);
+      exclude = normalizeBooleanConstraintValues(exclude);
+    }
     if (include || exclude) {
       constraints[dimension as MockChartDimension] = { include, exclude };
     }
@@ -414,6 +434,7 @@ async function runLlmMockChartPlan(
     'Use secondaryDimension for breakdowns (e.g. platform vs month). heatmap requires secondaryDimension.',
     'Output columns on the client are always dim_a, value, dim_b; do not rely on xField/yField names.',
     'constraints format: { "<dimension>": { "include": ["v1","v2"], "exclude": ["v3"] } }.',
+    'For boolean dimensions automated_detection/automated_decision, use only Yes/No values in constraints.',
     'When the prompt explicitly names entities (platforms/countries/categories),',
     'you MUST put them in constraints.include and keep the scope strict (no broad top-N expansion).',
     'If prompt says compare A vs B, include exactly A and B in constraints when possible.',

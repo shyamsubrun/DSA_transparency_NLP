@@ -69,6 +69,13 @@ function normalizeText(input: string): string {
     .trim();
 }
 
+function normalizeBooleanToken(value: string): 'yes' | 'no' | null {
+  const normalized = normalizeText(value);
+  if (['yes', 'oui', 'true', '1', 'vrai'].includes(normalized)) return 'yes';
+  if (['no', 'non', 'false', '0', 'faux'].includes(normalized)) return 'no';
+  return null;
+}
+
 function toComparableValue(
   dimension: ChartAggregationPlan['primaryDimension'],
   value: string,
@@ -95,6 +102,10 @@ function normalizeConstraintValue(
   if (dimension === 'platform_name') {
     const alias = PLATFORM_ALIASES[normalized];
     return [normalizeText(alias || trimmed)];
+  }
+  if (dimension === 'automated_detection' || dimension === 'automated_decision') {
+    const boolToken = normalizeBooleanToken(trimmed);
+    return boolToken ? [boolToken] : [normalized];
   }
   return [normalized];
 }
@@ -282,8 +293,11 @@ export function buildMockCustomChartResponse(
     chartType: plan.chartType,
     title: plan.title,
     subtitle: plan.subtitle || 'Generated chart',
-    explanation:
-      plan.explanation || 'Generated from your prompt (mock data aggregation).',
+    explanation: rows.length
+      ? plan.explanation || 'Generated from your prompt (mock data aggregation).'
+      : plan.metric === 'avg_delay_days'
+        ? 'No matching rows after filters/constraints for average delay. Try removing strict constraints or using count metric.'
+        : plan.explanation || 'Generated from your prompt (mock data aggregation).',
     columns,
     rows,
     echartsOption,
