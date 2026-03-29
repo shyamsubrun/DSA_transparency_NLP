@@ -88,10 +88,25 @@ function randomCountries(primaryCode: string, count: number = 3): string[] {
 
 // Generate a single mock moderation entry
 function generateMockEntry(id: number): ModerationEntry {
+  const platform_name = weightedPick(PLATFORMS, PLATFORM_WEIGHTS);
+  const category = weightedPick(CATEGORIES, CATEGORY_WEIGHTS);
+
   const applicationDateStr = randomDate(new Date('2024-01-01'), new Date('2025-12-31'));
   const applicationDate = new Date(applicationDateStr);
   const contentDateStr = randomDate(new Date('2023-01-01'), applicationDate);
-  const delayDays = Math.floor((applicationDate.getTime() - new Date(contentDateStr).getTime()) / (1000 * 60 * 60 * 24));
+  const baseDelayDays = Math.floor(
+    (applicationDate.getTime() - new Date(contentDateStr).getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  const pi = PLATFORMS.indexOf(platform_name);
+  const ci = CATEGORIES.indexOf(category);
+  const platformScale = 0.42 + ((pi + 5) % 8) * 0.11 + Math.random() * 0.38;
+  const categoryScale = 0.38 + ((ci + 3) % 12) * 0.07 + Math.random() * 0.42;
+  const jitterDays = (Math.random() - 0.5) * 110;
+  const delayDays = Math.max(
+    0,
+    Math.min(850, Math.round(baseDelayDays * platformScale * categoryScale + jitterDays)),
+  );
 
   const countryEntry = randomCountryEntry();
   const scopeCount = Math.floor(Math.random() * 5) + 1;
@@ -100,8 +115,8 @@ function generateMockEntry(id: number): ModerationEntry {
     id: `mock-${id}`,
     application_date: applicationDateStr,
     content_date: contentDateStr,
-    platform_name: weightedPick(PLATFORMS, PLATFORM_WEIGHTS),
-    category: weightedPick(CATEGORIES, CATEGORY_WEIGHTS),
+    platform_name,
+    category,
     decision_type: weightedPick(DECISION_TYPES, DECISION_TYPE_WEIGHTS),
     decision_ground: weightedPick(DECISION_GROUNDS, DECISION_GROUND_WEIGHTS),
     incompatible_content_ground: Math.random() > 0.35 ? `Ground ${Math.floor(Math.random() * 12)}` : null,

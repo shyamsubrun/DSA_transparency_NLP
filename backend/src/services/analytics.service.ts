@@ -198,11 +198,25 @@ function buildChartOption(
     const xValues = Array.from(new Set(rows.map((r) => String(r[xField] ?? 'N/A'))));
     const yName = seriesField || inferred.seriesField || xField;
     const yValues = Array.from(new Set(rows.map((r) => String(r[yName] ?? 'N/A'))));
+    const nums = rows
+      .map((r) => Number(r[valueField] ?? 0))
+      .filter((n) => Number.isFinite(n));
+    const minRaw = nums.length ? Math.min(...nums) : 0;
+    const maxRaw = nums.length ? Math.max(...nums) : 1;
+    const span = maxRaw - minRaw;
+    const vmin = span === 0 ? minRaw - 1 : minRaw;
+    const vmax = span === 0 ? minRaw + 1 : maxRaw;
     return {
       tooltip: { position: 'top' },
       xAxis: { type: 'category', data: xValues },
       yAxis: { type: 'category', data: yValues },
-      visualMap: { min: 0, max: 100, calculable: true, orient: 'horizontal', bottom: 0 },
+      visualMap: {
+        min: vmin,
+        max: vmax,
+        calculable: true,
+        orient: 'horizontal',
+        bottom: 0,
+      },
       series: [
         {
           type: 'heatmap',

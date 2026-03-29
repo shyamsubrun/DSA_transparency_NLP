@@ -79,15 +79,22 @@ export function buildChartOptionFromRows(
     const xValues = Array.from(new Set(rows.map((r) => String(r[xField] ?? 'N/A'))));
     const yName = seriesField || inferred.seriesField || xField;
     const yValues = Array.from(new Set(rows.map((r) => String(r[yName] ?? 'N/A'))));
-    const nums = rows.map((r) => Number(r[valueField] ?? 0));
-    const maxVal = Math.max(1, ...nums);
+    const nums = rows
+      .map((r) => Number(r[valueField] ?? 0))
+      .filter((n) => Number.isFinite(n));
+    const minRaw = nums.length ? Math.min(...nums) : 0;
+    const maxRaw = nums.length ? Math.max(...nums) : 1;
+    const span = maxRaw - minRaw;
+    // Map colors to the actual value range so cells don't all look the same when values cluster (e.g. avg delays 350–420).
+    const vmin = span === 0 ? minRaw - 1 : minRaw;
+    const vmax = span === 0 ? minRaw + 1 : maxRaw;
     return {
       tooltip: { position: 'top' },
       xAxis: { type: 'category', data: xValues },
       yAxis: { type: 'category', data: yValues },
       visualMap: {
-        min: 0,
-        max: maxVal,
+        min: vmin,
+        max: vmax,
         calculable: true,
         orient: 'horizontal',
         bottom: 0,
