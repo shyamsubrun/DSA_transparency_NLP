@@ -119,6 +119,7 @@ export function PlatformsSection() {
   const categories = [...new Set(
     Object.values(aggregations.categoryByPlatform).flatMap(obj => Object.keys(obj))
   )].slice(0, 8); // Top 8 categories for readability
+  const radarSeriesColors = ['#1e3a5f', '#0d9488', '#8b5cf6'];
 
   const radarOptionBase = {
     tooltip: {
@@ -157,14 +158,14 @@ export function PlatformsSection() {
         name: platform,
         value: categories.map(cat => aggregations.categoryByPlatform[platform]?.[cat] || 0),
         lineStyle: { 
-          color: PLATFORM_COLORS[platform] || CHART_COLORS[idx],
+          color: radarSeriesColors[idx % radarSeriesColors.length],
           width: screenSize === 'mobile' ? 1.5 : 2,
         },
         itemStyle: { 
-          color: PLATFORM_COLORS[platform] || CHART_COLORS[idx] 
+          color: radarSeriesColors[idx % radarSeriesColors.length],
         },
         areaStyle: { 
-          color: PLATFORM_COLORS[platform] || CHART_COLORS[idx],
+          color: radarSeriesColors[idx % radarSeriesColors.length],
           opacity: 0.1,
         },
       })),
