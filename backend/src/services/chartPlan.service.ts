@@ -137,6 +137,8 @@ export function validateAggregationPlan(raw: unknown): ChartAggregationPlan {
 
   const sort: 'desc' | 'asc' = o.sort === 'asc' ? 'asc' : 'desc';
 
+  // Row columns on the client are always dim_a / value / dim_b; the LLM often echoes
+  // semantic names in xField/yField — ignore those fields and keep fixed aliases.
   const plan: ChartAggregationPlan = {
     chartType: chartType as MockAggregationChartType,
     title: String(o.title || 'Generated chart').slice(0, 200),
@@ -151,23 +153,6 @@ export function validateAggregationPlan(raw: unknown): ChartAggregationPlan {
     yField: 'value',
     seriesField: secondaryDimension ? 'dim_b' : undefined,
   };
-
-  const xf = o.xField;
-  const yf = o.yField;
-  if (xf !== undefined && xf !== 'dim_a') {
-    throw new Error('xField must be dim_a when provided.');
-  }
-  if (yf !== undefined && yf !== 'value') {
-    throw new Error('yField must be value when provided.');
-  }
-  const sf = o.seriesField;
-  if (secondaryDimension) {
-    if (sf !== undefined && sf !== null && sf !== 'dim_b') {
-      throw new Error('seriesField must be dim_b when secondaryDimension is set.');
-    }
-  } else if (sf !== undefined && sf !== null && String(sf) !== '') {
-    throw new Error('seriesField must be omitted without secondaryDimension.');
-  }
 
   return plan;
 }
@@ -241,7 +226,7 @@ async function runLlmMockChartPlan(
     `Allowed dimensions: ${dimensions}.`,
     'Use month for time trends (buckets application_date by YYYY-MM).',
     'Use secondaryDimension for breakdowns (e.g. platform vs month). heatmap requires secondaryDimension.',
-    'Optional: xField must be dim_a, yField value, seriesField dim_b if two dimensions.',
+    'Output columns on the client are always dim_a, value, dim_b; do not rely on xField/yField names.',
     'Prefer French titles when the user writes in French.',
   ].join(' ');
 
