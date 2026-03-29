@@ -1,4 +1,5 @@
 import type { EChartsOption } from 'echarts';
+import { axisTitle } from './chartConfig';
 
 /** Minimal plan shape for building ECharts options from tabular rows (mirrors backend analytics.service). */
 export interface ChartBuildPlan {
@@ -63,8 +64,8 @@ export function buildChartOptionFromRows(
   if (plan.chartType === 'scatter') {
     return {
       tooltip: { trigger: 'item' },
-      xAxis: { type: 'value', name: xField },
-      yAxis: { type: 'value', name: yField },
+      xAxis: { type: 'value', ...axisTitle(xField, { nameLocation: 'middle', nameGap: 28 }) },
+      yAxis: { type: 'value', ...axisTitle(yField, { nameLocation: 'middle', nameGap: 40 }) },
       series: [
         {
           type: 'scatter',
@@ -90,14 +91,24 @@ export function buildChartOptionFromRows(
     const vmax = span === 0 ? minRaw + 1 : maxRaw;
     return {
       tooltip: { position: 'top' },
-      xAxis: { type: 'category', data: xValues },
-      yAxis: { type: 'category', data: yValues },
+      xAxis: {
+        type: 'category',
+        data: xValues,
+        ...axisTitle(String(xField), { nameGap: 32 }),
+      },
+      yAxis: {
+        type: 'category',
+        data: yValues,
+        ...axisTitle(String(yName), { nameLocation: 'end', nameGap: 12 }),
+      },
       visualMap: {
         min: vmin,
         max: vmax,
         calculable: true,
         orient: 'horizontal',
         bottom: 0,
+        text: [`Higher ${String(valueField)}`, `Lower ${String(valueField)}`],
+        textStyle: { color: '#64748b', fontSize: 10 },
       },
       series: [
         {
@@ -128,8 +139,12 @@ export function buildChartOptionFromRows(
     return {
       tooltip: { trigger: 'axis' },
       legend: { top: 0, type: 'scroll' },
-      xAxis: { type: 'category', data: categories },
-      yAxis: { type: 'value' },
+      xAxis: {
+        type: 'category',
+        data: categories,
+        ...axisTitle(String(xField), { nameGap: 32 }),
+      },
+      yAxis: { type: 'value', ...axisTitle(String(yField), { nameLocation: 'middle', nameGap: 40 }) },
       series: Array.from(grouped.entries()).map(([name, values]) => ({
         name,
         type: seriesType,
@@ -148,8 +163,9 @@ export function buildChartOptionFromRows(
     xAxis: {
       type: 'category',
       data: rows.map((r) => String(r[xField] ?? 'N/A')),
+      ...axisTitle(String(xField), { nameGap: 32 }),
     },
-    yAxis: { type: 'value' },
+    yAxis: { type: 'value', ...axisTitle(String(yField), { nameLocation: 'middle', nameGap: 40 }) },
     series: [
       {
         type: singleType,

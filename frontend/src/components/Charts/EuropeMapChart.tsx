@@ -150,12 +150,24 @@ export function EuropeMapChart({ byCountry, countryDetails }: EuropeMapChartProp
         `;
       },
     },
+    graphic: [
+      {
+        type: 'text',
+        left: 16,
+        bottom: 112,
+        style: {
+          text: 'Horizontal: longitude • Vertical: latitude • Color: moderation actions (count)',
+          fill: '#64748b',
+          fontSize: 10,
+        },
+      },
+    ],
     visualMap: {
       min: 0,
       max: maxActions,
       left: 16,
       bottom: 16,
-      text: ['High', 'Low'],
+      text: ['More actions', 'Fewer actions'],
       calculable: true,
       inRange: {
         color: ['#e0f2fe', '#7dd3fc', '#38bdf8', '#0ea5e9', '#0369a1', '#075985'],

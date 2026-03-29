@@ -2,7 +2,15 @@ import { FileType } from 'lucide-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
 import { useScreenSize } from '../../hooks/useScreenSize';
-import { baseChartOptions, pieChartOptions, CHART_COLORS, DECISION_TYPE_COLORS, getResponsiveChartOptions, getResponsivePieChartOptions } from '../../utils/chartConfig';
+import {
+  axisTitle,
+  baseChartOptions,
+  CHART_COLORS,
+  DECISION_TYPE_COLORS,
+  getResponsiveChartOptions,
+  getResponsivePieChartOptions,
+  pieChartOptions,
+} from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
 export function ContentTypeSection() {
@@ -30,11 +38,13 @@ export function ContentTypeSection() {
         const trimmed = (name || 'NULL').trim();
         return trimmed.length > 15 ? trimmed.substring(0, 15) + '...' : trimmed;
       }),
+      ...axisTitle('Content type', { nameGap: screenSize === 'mobile' ? 48 : 32 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { color: '#64748b', fontSize: 11, rotate: screenSize === 'mobile' ? 45 : 0 },
     },
     yAxis: {
       type: 'value',
+      ...axisTitle('Number of actions', { nameLocation: 'middle', nameGap: 40 }),
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },

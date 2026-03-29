@@ -2,7 +2,14 @@ import { Building2 } from 'lucide-react';
 import { useFilteredData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
 import { useScreenSize } from '../../hooks/useScreenSize';
-import { baseChartOptions, PLATFORM_COLORS, DECISION_TYPE_COLORS, CHART_COLORS, getResponsiveChartOptions } from '../../utils/chartConfig';
+import {
+  axisTitle,
+  baseChartOptions,
+  CHART_COLORS,
+  DECISION_TYPE_COLORS,
+  getResponsiveChartOptions,
+  PLATFORM_COLORS,
+} from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
 export function PlatformsSection() {
@@ -19,6 +26,7 @@ export function PlatformsSection() {
     grid: { ...baseChartOptions.grid, left: screenSize === 'mobile' ? '25%' : '20%' },
     xAxis: {
       type: 'value',
+      ...axisTitle('Number of actions', { nameLocation: 'middle', nameGap: 28 }),
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
@@ -26,6 +34,7 @@ export function PlatformsSection() {
     yAxis: {
       type: 'category',
       data: platformData.map(([name]) => name).reverse(),
+      ...axisTitle('Platform', { nameLocation: 'end', nameGap: 12 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { color: '#1e293b', fontSize: 12, fontWeight: 500 },
     },
@@ -64,6 +73,7 @@ export function PlatformsSection() {
         const trimmed = name.trim();
         return trimmed.length > 20 ? trimmed.substring(0, 20) + '...' : trimmed;
       }),
+      ...axisTitle('Platform', { nameGap: 36 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { 
         color: '#64748b', 
@@ -73,6 +83,7 @@ export function PlatformsSection() {
     },
     yAxis: {
       type: 'value',
+      ...axisTitle('Number of actions', { nameLocation: 'middle', nameGap: 40 }),
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
@@ -101,6 +112,19 @@ export function PlatformsSection() {
     tooltip: {
       trigger: 'item',
     },
+    graphic: [
+      {
+        type: 'text',
+        left: 'center',
+        bottom: 8,
+        style: {
+          text: 'Axes: each spoke = content category • distance from center ∝ number of actions',
+          fill: '#64748b',
+          fontSize: 10,
+          textAlign: 'center',
+        },
+      },
+    ],
     legend: {
       data: topPlatforms,
       bottom: 0,

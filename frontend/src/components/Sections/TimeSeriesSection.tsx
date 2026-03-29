@@ -3,7 +3,13 @@ import { getEffectiveMockVolumeScale } from '../../data/mockVolumeScale';
 import { useFilteredData, useTimeSeriesData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
 import { useScreenSize } from '../../hooks/useScreenSize';
-import { baseChartOptions, CHART_COLORS, PLATFORM_COLORS, getResponsiveChartOptions } from '../../utils/chartConfig';
+import {
+  axisTitle,
+  baseChartOptions,
+  CHART_COLORS,
+  PLATFORM_COLORS,
+  getResponsiveChartOptions,
+} from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
 export function TimeSeriesSection() {
@@ -20,11 +26,13 @@ export function TimeSeriesSection() {
     xAxis: {
       type: 'category',
       data: timeSeries.months,
+      ...axisTitle('Month (YYYY-MM)', { nameGap: 32 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { color: '#64748b', fontSize: 11 },
     },
     yAxis: {
       type: 'value',
+      ...axisTitle('Number of actions', { nameLocation: 'middle', nameGap: 42 }),
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
@@ -63,11 +71,13 @@ export function TimeSeriesSection() {
     xAxis: {
       type: 'category',
       data: timeSeries.months,
+      ...axisTitle('Month (YYYY-MM)', { nameGap: 32 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { color: '#64748b', fontSize: 11 },
     },
     yAxis: {
       type: 'value',
+      ...axisTitle('Number of actions', { nameLocation: 'middle', nameGap: 42 }),
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
@@ -96,13 +106,13 @@ export function TimeSeriesSection() {
     xAxis: {
       type: 'category',
       data: timeSeries.months,
+      ...axisTitle('Month (YYYY-MM)', { nameGap: 32 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { color: '#64748b', fontSize: 11 },
     },
     yAxis: {
       type: 'value',
-      name: 'Days',
-      nameTextStyle: { color: '#64748b', fontSize: 11 },
+      ...axisTitle('Average delay (days)', { nameLocation: 'middle', nameGap: 46 }),
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
