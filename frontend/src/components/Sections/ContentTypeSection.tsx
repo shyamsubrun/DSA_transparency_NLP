@@ -3,13 +3,13 @@ import { useFilteredData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
 import { useScreenSize } from '../../hooks/useScreenSize';
 import {
-  axisTitle,
+  axisNameTextStyle,
   baseChartOptions,
+  pieChartOptions,
   CHART_COLORS,
   DECISION_TYPE_COLORS,
   getResponsiveChartOptions,
   getResponsivePieChartOptions,
-  pieChartOptions,
 } from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
@@ -31,20 +31,26 @@ export function ContentTypeSection() {
       ...baseChartOptions.legend,
       data: decisionTypes,
     },
-    grid: { ...baseChartOptions.grid, top: screenSize === 'mobile' ? '25%' : '18%' },
+    grid: { ...baseChartOptions.grid, top: screenSize === 'mobile' ? '25%' : '18%', bottom: '10%' },
     xAxis: {
       type: 'category',
+      name: 'Content type',
+      nameLocation: 'middle',
+      nameGap: 32,
+      nameTextStyle: axisNameTextStyle,
       data: contentTypeData.map(([name]) => {
         const trimmed = (name || 'NULL').trim();
         return trimmed.length > 15 ? trimmed.substring(0, 15) + '...' : trimmed;
       }),
-      ...axisTitle('Content type', { nameGap: screenSize === 'mobile' ? 48 : 32 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { color: '#64748b', fontSize: 11, rotate: screenSize === 'mobile' ? 45 : 0 },
     },
     yAxis: {
       type: 'value',
-      ...axisTitle('Number of actions', { nameLocation: 'middle', nameGap: 40 }),
+      name: 'Actions',
+      nameLocation: 'middle',
+      nameGap: 40,
+      nameTextStyle: axisNameTextStyle,
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
@@ -140,7 +146,7 @@ export function ContentTypeSection() {
         />
         <ChartWithExport
           title="Content Type Distribution"
-          subtitle="Share of each content format"
+          subtitle="Proportion of each content format (legend = categories; arc = share)"
           option={pieOption}
           containerSize="default"
         />

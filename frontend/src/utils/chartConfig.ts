@@ -108,6 +108,13 @@ export const DECISION_TYPE_COLORS: Record<string, string> = new Proxy({} as Reco
   }
 });
 
+/** ECharts axis title style (abscissa / ordinate labels). */
+export const axisNameTextStyle = {
+  color: '#64748b',
+  fontSize: 11,
+  fontWeight: 500 as const,
+};
+
 export const baseChartOptions = {
   grid: {
     left: '3%',
@@ -139,32 +146,6 @@ export const baseChartOptions = {
     itemGap: 16,
   },
 };
-
-/** Shared style for ECharts axis titles (`name` / `nameTextStyle`). */
-export const axisNameTextStyle = {
-  color: '#64748b',
-  fontSize: 11,
-  fontWeight: 500,
-};
-
-/**
- * ECharts axis title so users see what abscissa / ordinate represent.
- * @param nameGap — distance between axis line and title (tune if labels overlap).
- */
-export function axisTitle(
-  name: string,
-  opts?: {
-    nameLocation?: 'start' | 'middle' | 'end';
-    nameGap?: number;
-  },
-) {
-  return {
-    name,
-    nameLocation: opts?.nameLocation ?? 'middle',
-    nameGap: opts?.nameGap ?? 28,
-    nameTextStyle: axisNameTextStyle,
-  };
-}
 
 export const pieChartOptions = {
   tooltip: {

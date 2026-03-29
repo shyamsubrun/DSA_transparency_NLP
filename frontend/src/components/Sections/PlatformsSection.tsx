@@ -3,12 +3,12 @@ import { useFilteredData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
 import { useScreenSize } from '../../hooks/useScreenSize';
 import {
-  axisTitle,
+  axisNameTextStyle,
   baseChartOptions,
-  CHART_COLORS,
-  DECISION_TYPE_COLORS,
-  getResponsiveChartOptions,
   PLATFORM_COLORS,
+  DECISION_TYPE_COLORS,
+  CHART_COLORS,
+  getResponsiveChartOptions,
 } from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
@@ -23,18 +23,24 @@ export function PlatformsSection() {
   // Horizontal bar: Actions per platform
   const platformBarOptionBase = {
     ...baseChartOptions,
-    grid: { ...baseChartOptions.grid, left: screenSize === 'mobile' ? '25%' : '20%' },
+    grid: { ...baseChartOptions.grid, left: screenSize === 'mobile' ? '25%' : '20%', bottom: '10%' },
     xAxis: {
       type: 'value',
-      ...axisTitle('Number of actions', { nameLocation: 'middle', nameGap: 28 }),
+      name: 'Actions',
+      nameLocation: 'middle',
+      nameGap: 30,
+      nameTextStyle: axisNameTextStyle,
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
     },
     yAxis: {
       type: 'category',
+      name: 'Platform',
+      nameLocation: 'middle',
+      nameGap: 48,
+      nameTextStyle: axisNameTextStyle,
       data: platformData.map(([name]) => name).reverse(),
-      ...axisTitle('Platform', { nameLocation: 'end', nameGap: 12 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { color: '#1e293b', fontSize: 12, fontWeight: 500 },
     },
@@ -66,14 +72,17 @@ export function PlatformsSection() {
       ...baseChartOptions.legend,
       data: decisionTypes,
     },
-    grid: { ...baseChartOptions.grid, top: screenSize === 'mobile' ? '25%' : '20%' },
+    grid: { ...baseChartOptions.grid, top: screenSize === 'mobile' ? '25%' : '20%', bottom: '10%' },
     xAxis: {
       type: 'category',
+      name: 'Platform',
+      nameLocation: 'middle',
+      nameGap: 36,
+      nameTextStyle: axisNameTextStyle,
       data: platformData.map(([name]) => {
         const trimmed = name.trim();
         return trimmed.length > 20 ? trimmed.substring(0, 20) + '...' : trimmed;
       }),
-      ...axisTitle('Platform', { nameGap: 36 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { 
         color: '#64748b', 
@@ -83,7 +92,10 @@ export function PlatformsSection() {
     },
     yAxis: {
       type: 'value',
-      ...axisTitle('Number of actions', { nameLocation: 'middle', nameGap: 40 }),
+      name: 'Actions',
+      nameLocation: 'middle',
+      nameGap: 40,
+      nameTextStyle: axisNameTextStyle,
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
@@ -112,19 +124,6 @@ export function PlatformsSection() {
     tooltip: {
       trigger: 'item',
     },
-    graphic: [
-      {
-        type: 'text',
-        left: 'center',
-        bottom: 8,
-        style: {
-          text: 'Axes: each spoke = content category • distance from center ∝ number of actions',
-          fill: '#64748b',
-          fontSize: 10,
-          textAlign: 'center',
-        },
-      },
-    ],
     legend: {
       data: topPlatforms,
       bottom: 0,
@@ -198,7 +197,7 @@ export function PlatformsSection() {
         />
         <ChartWithExport
           title="Category Profile"
-          subtitle="Top 3 platforms comparison"
+          subtitle="Top 3 platforms — spokes: content categories · distance from center: action count"
           option={radarOption}
           containerSize="default"
         />

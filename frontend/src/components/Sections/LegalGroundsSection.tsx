@@ -2,7 +2,7 @@ import { Scale } from 'lucide-react';
 import type { EChartsOption } from 'echarts';
 import { useFilteredData } from '../../hooks/useFilteredData';
 import { ChartWithExport } from '../Charts/ChartWithExport';
-import { axisTitle, baseChartOptions, CHART_COLORS } from '../../utils/chartConfig';
+import { axisNameTextStyle, baseChartOptions, CHART_COLORS } from '../../utils/chartConfig';
 import styles from './Section.module.css';
 
 export function LegalGroundsSection() {
@@ -13,21 +13,27 @@ export function LegalGroundsSection() {
 
   const groundsBarOption = {
     ...baseChartOptions,
-    grid: { ...baseChartOptions.grid, left: '40%' },
+    grid: { ...baseChartOptions.grid, left: '40%', bottom: '10%' },
     xAxis: {
       type: 'value',
-      ...axisTitle('Number of actions', { nameLocation: 'middle', nameGap: 28 }),
+      name: 'Actions',
+      nameLocation: 'middle',
+      nameGap: 30,
+      nameTextStyle: axisNameTextStyle,
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
     },
     yAxis: {
       type: 'category',
+      name: 'Legal basis',
+      nameLocation: 'middle',
+      nameGap: 52,
+      nameTextStyle: axisNameTextStyle,
       data: groundsData.slice(0, 10).map(([name]) => {
         const trimmed = name.trim();
         return trimmed.length > 35 ? trimmed.substring(0, 35) + '...' : trimmed;
       }).reverse(),
-      ...axisTitle('Decision ground', { nameLocation: 'end', nameGap: 12 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { 
         color: '#1e293b', 

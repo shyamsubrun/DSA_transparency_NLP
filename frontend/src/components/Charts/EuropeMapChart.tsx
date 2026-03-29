@@ -150,18 +150,6 @@ export function EuropeMapChart({ byCountry, countryDetails }: EuropeMapChartProp
         `;
       },
     },
-    graphic: [
-      {
-        type: 'text',
-        left: 16,
-        bottom: 112,
-        style: {
-          text: 'Horizontal: longitude • Vertical: latitude • Color: moderation actions (count)',
-          fill: '#64748b',
-          fontSize: 10,
-        },
-      },
-    ],
     visualMap: {
       min: 0,
       max: maxActions,
@@ -215,7 +203,9 @@ export function EuropeMapChart({ byCountry, countryDetails }: EuropeMapChartProp
       <div className={styles.chartHeader}>
         <div>
           <h3 className={styles.chartTitle}>EU Moderation Map</h3>
-          <p className={styles.chartSubtitle}>Interactive map of moderation actions across EU member states — hover for details, scroll to zoom</p>
+          <p className={styles.chartSubtitle}>
+            Geography: EU member states (map position) · Color scale: moderation action count (left). Hover for details, scroll to zoom.
+          </p>
         </div>
         <button
           type="button"

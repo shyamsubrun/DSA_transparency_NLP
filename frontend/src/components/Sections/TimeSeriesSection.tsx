@@ -4,7 +4,7 @@ import { useFilteredData, useTimeSeriesData } from '../../hooks/useFilteredData'
 import { ChartWithExport } from '../Charts/ChartWithExport';
 import { useScreenSize } from '../../hooks/useScreenSize';
 import {
-  axisTitle,
+  axisNameTextStyle,
   baseChartOptions,
   CHART_COLORS,
   PLATFORM_COLORS,
@@ -20,19 +20,26 @@ export function TimeSeriesSection() {
   // Line chart: Total actions over time
   const totalActionsOptionBase = {
     ...baseChartOptions,
+    grid: { ...baseChartOptions.grid, bottom: '10%' },
     title: {
       show: false,
     },
     xAxis: {
       type: 'category',
+      name: 'Month',
+      nameLocation: 'middle',
+      nameGap: 28,
+      nameTextStyle: axisNameTextStyle,
       data: timeSeries.months,
-      ...axisTitle('Month (YYYY-MM)', { nameGap: 32 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { color: '#64748b', fontSize: 11 },
     },
     yAxis: {
       type: 'value',
-      ...axisTitle('Number of actions', { nameLocation: 'middle', nameGap: 42 }),
+      name: 'Actions',
+      nameLocation: 'middle',
+      nameGap: 40,
+      nameTextStyle: axisNameTextStyle,
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
@@ -67,17 +74,23 @@ export function TimeSeriesSection() {
       ...baseChartOptions.legend,
       data: timeSeries.platforms,
     },
-    grid: { ...baseChartOptions.grid, top: screenSize === 'mobile' ? '25%' : '15%' },
+    grid: { ...baseChartOptions.grid, top: screenSize === 'mobile' ? '25%' : '15%', bottom: '10%' },
     xAxis: {
       type: 'category',
+      name: 'Month',
+      nameLocation: 'middle',
+      nameGap: 28,
+      nameTextStyle: axisNameTextStyle,
       data: timeSeries.months,
-      ...axisTitle('Month (YYYY-MM)', { nameGap: 32 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { color: '#64748b', fontSize: 11 },
     },
     yAxis: {
       type: 'value',
-      ...axisTitle('Number of actions', { nameLocation: 'middle', nameGap: 42 }),
+      name: 'Actions',
+      nameLocation: 'middle',
+      nameGap: 40,
+      nameTextStyle: axisNameTextStyle,
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },
@@ -103,16 +116,23 @@ export function TimeSeriesSection() {
   // Area chart: Delay evolution
   const delayEvolutionOptionBase = {
     ...baseChartOptions,
+    grid: { ...baseChartOptions.grid, bottom: '10%' },
     xAxis: {
       type: 'category',
+      name: 'Month',
+      nameLocation: 'middle',
+      nameGap: 28,
+      nameTextStyle: axisNameTextStyle,
       data: timeSeries.months,
-      ...axisTitle('Month (YYYY-MM)', { nameGap: 32 }),
       axisLine: { lineStyle: { color: '#e2e8f0' } },
       axisLabel: { color: '#64748b', fontSize: 11 },
     },
     yAxis: {
       type: 'value',
-      ...axisTitle('Average delay (days)', { nameLocation: 'middle', nameGap: 46 }),
+      name: 'Days (avg. delay)',
+      nameLocation: 'middle',
+      nameGap: 44,
+      nameTextStyle: axisNameTextStyle,
       axisLine: { show: false },
       axisLabel: { color: '#64748b', fontSize: 11 },
       splitLine: { lineStyle: { color: '#f1f5f9' } },

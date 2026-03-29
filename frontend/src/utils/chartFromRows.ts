@@ -1,5 +1,5 @@
 import type { EChartsOption } from 'echarts';
-import { axisTitle } from './chartConfig';
+import { axisNameTextStyle } from './chartConfig';
 
 /** Minimal plan shape for building ECharts options from tabular rows (mirrors backend analytics.service). */
 export interface ChartBuildPlan {
@@ -64,8 +64,20 @@ export function buildChartOptionFromRows(
   if (plan.chartType === 'scatter') {
     return {
       tooltip: { trigger: 'item' },
-      xAxis: { type: 'value', ...axisTitle(xField, { nameLocation: 'middle', nameGap: 28 }) },
-      yAxis: { type: 'value', ...axisTitle(yField, { nameLocation: 'middle', nameGap: 40 }) },
+      xAxis: {
+        type: 'value',
+        name: String(xField),
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: axisNameTextStyle,
+      },
+      yAxis: {
+        type: 'value',
+        name: String(yField),
+        nameLocation: 'middle',
+        nameGap: 40,
+        nameTextStyle: axisNameTextStyle,
+      },
       series: [
         {
           type: 'scatter',
@@ -89,17 +101,25 @@ export function buildChartOptionFromRows(
     // Map colors to the actual value range so cells don't all look the same when values cluster (e.g. avg delays 350–420).
     const vmin = span === 0 ? minRaw - 1 : minRaw;
     const vmax = span === 0 ? minRaw + 1 : maxRaw;
+    const xLabel = String(xField);
+    const yLabel = String(yName);
     return {
       tooltip: { position: 'top' },
       xAxis: {
         type: 'category',
         data: xValues,
-        ...axisTitle(String(xField), { nameGap: 32 }),
+        name: xLabel,
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: axisNameTextStyle,
       },
       yAxis: {
         type: 'category',
         data: yValues,
-        ...axisTitle(String(yName), { nameLocation: 'end', nameGap: 12 }),
+        name: yLabel,
+        nameLocation: 'middle',
+        nameGap: 36,
+        nameTextStyle: axisNameTextStyle,
       },
       visualMap: {
         min: vmin,
@@ -107,8 +127,8 @@ export function buildChartOptionFromRows(
         calculable: true,
         orient: 'horizontal',
         bottom: 0,
-        text: [`Higher ${String(valueField)}`, `Lower ${String(valueField)}`],
-        textStyle: { color: '#64748b', fontSize: 10 },
+        text: [`${String(valueField)} (high)`, `${String(valueField)} (low)`],
+        textStyle: axisNameTextStyle,
       },
       series: [
         {
@@ -142,9 +162,18 @@ export function buildChartOptionFromRows(
       xAxis: {
         type: 'category',
         data: categories,
-        ...axisTitle(String(xField), { nameGap: 32 }),
+        name: String(xField),
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: axisNameTextStyle,
       },
-      yAxis: { type: 'value', ...axisTitle(String(yField), { nameLocation: 'middle', nameGap: 40 }) },
+      yAxis: {
+        type: 'value',
+        name: String(yField),
+        nameLocation: 'middle',
+        nameGap: 40,
+        nameTextStyle: axisNameTextStyle,
+      },
       series: Array.from(grouped.entries()).map(([name, values]) => ({
         name,
         type: seriesType,
@@ -163,9 +192,18 @@ export function buildChartOptionFromRows(
     xAxis: {
       type: 'category',
       data: rows.map((r) => String(r[xField] ?? 'N/A')),
-      ...axisTitle(String(xField), { nameGap: 32 }),
+      name: String(xField),
+      nameLocation: 'middle',
+      nameGap: 28,
+      nameTextStyle: axisNameTextStyle,
     },
-    yAxis: { type: 'value', ...axisTitle(String(yField), { nameLocation: 'middle', nameGap: 40 }) },
+    yAxis: {
+      type: 'value',
+      name: String(yField),
+      nameLocation: 'middle',
+      nameGap: 40,
+      nameTextStyle: axisNameTextStyle,
+    },
     series: [
       {
         type: singleType,

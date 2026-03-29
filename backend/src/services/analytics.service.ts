@@ -152,6 +152,8 @@ function inferFields(rows: Record<string, unknown>[]): {
   return { xField, yField, seriesField, valueField };
 }
 
+const AXIS_NAME_TEXT_STYLE = { color: '#64748b', fontSize: 11, fontWeight: 500 };
+
 function buildChartOption(
   plan: LlmChartPlan,
   rows: Record<string, unknown>[],
@@ -182,8 +184,20 @@ function buildChartOption(
   if (plan.chartType === 'scatter') {
     return {
       tooltip: { trigger: 'item' },
-      xAxis: { type: 'value', name: xField },
-      yAxis: { type: 'value', name: yField },
+      xAxis: {
+        type: 'value',
+        name: String(xField),
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: AXIS_NAME_TEXT_STYLE,
+      },
+      yAxis: {
+        type: 'value',
+        name: String(yField),
+        nameLocation: 'middle',
+        nameGap: 40,
+        nameTextStyle: AXIS_NAME_TEXT_STYLE,
+      },
       series: [
         {
           type: 'scatter',
@@ -208,14 +222,30 @@ function buildChartOption(
     const vmax = span === 0 ? minRaw + 1 : maxRaw;
     return {
       tooltip: { position: 'top' },
-      xAxis: { type: 'category', data: xValues },
-      yAxis: { type: 'category', data: yValues },
+      xAxis: {
+        type: 'category',
+        data: xValues,
+        name: String(xField),
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: AXIS_NAME_TEXT_STYLE,
+      },
+      yAxis: {
+        type: 'category',
+        data: yValues,
+        name: String(yName),
+        nameLocation: 'middle',
+        nameGap: 36,
+        nameTextStyle: AXIS_NAME_TEXT_STYLE,
+      },
       visualMap: {
         min: vmin,
         max: vmax,
         calculable: true,
         orient: 'horizontal',
         bottom: 0,
+        text: [`${String(valueField)} (high)`, `${String(valueField)} (low)`],
+        textStyle: AXIS_NAME_TEXT_STYLE,
       },
       series: [
         {
@@ -245,8 +275,21 @@ function buildChartOption(
     return {
       tooltip: { trigger: 'axis' },
       legend: { top: 0, type: 'scroll' },
-      xAxis: { type: 'category', data: categories },
-      yAxis: { type: 'value' },
+      xAxis: {
+        type: 'category',
+        data: categories,
+        name: String(xField),
+        nameLocation: 'middle',
+        nameGap: 28,
+        nameTextStyle: AXIS_NAME_TEXT_STYLE,
+      },
+      yAxis: {
+        type: 'value',
+        name: String(yField),
+        nameLocation: 'middle',
+        nameGap: 40,
+        nameTextStyle: AXIS_NAME_TEXT_STYLE,
+      },
       series: Array.from(grouped.entries()).map(([name, values]) => ({
         name,
         type: plan.chartType,
@@ -264,8 +307,18 @@ function buildChartOption(
     xAxis: {
       type: 'category',
       data: rows.map((r) => String(r[xField] ?? 'N/A')),
+      name: String(xField),
+      nameLocation: 'middle',
+      nameGap: 28,
+      nameTextStyle: AXIS_NAME_TEXT_STYLE,
     },
-    yAxis: { type: 'value' },
+    yAxis: {
+      type: 'value',
+      name: String(yField),
+      nameLocation: 'middle',
+      nameGap: 40,
+      nameTextStyle: AXIS_NAME_TEXT_STYLE,
+    },
     series: [
       {
         type: plan.chartType === 'line' ? 'line' : 'bar',
