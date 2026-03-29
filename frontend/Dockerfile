@@ -24,7 +24,7 @@ COPY tsconfig*.json ./
 # Par défaut: mock data + API relative /api (nginx → backend). Surcharger au build: docker compose build --build-arg VITE_USE_MOCK_DATA=false
 ARG VITE_API_BASE_URL=/api
 ARG VITE_USE_MOCK_DATA=true
-ARG VITE_MOCK_DATA_SIZE=30000
+ARG VITE_MOCK_DATA_SIZE=50000
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_USE_MOCK_DATA=$VITE_USE_MOCK_DATA
 ENV VITE_MOCK_DATA_SIZE=$VITE_MOCK_DATA_SIZE
