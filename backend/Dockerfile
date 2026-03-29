@@ -37,13 +37,10 @@ RUN npm config set fetch-timeout 600000 && \
 
 WORKDIR /app
 
-# Installer seulement les dépendances de production
+# Copier le schéma avant npm ci : le postinstall (prisma generate) a besoin de prisma/schema.prisma
 COPY package*.json ./
-RUN npm ci --only=production
-
-# Copier Prisma schema et générer client
-COPY prisma ./prisma
-RUN npx prisma generate
+COPY prisma ./prisma/
+RUN npm ci --omit=dev
 
 # Copier le code compilé depuis le stage builder
 COPY --from=builder /app/dist ./dist
