@@ -34,6 +34,7 @@ services:
         # Bake-time only: un fichier .env à la racine du repo (à côté de ce compose) peut définir VITE_USE_MOCK_DATA.
         # Les frontend/.env ne sont pas utilisés par le build Docker sans les copier dans l'image.
         - VITE_USE_MOCK_DATA=${VITE_USE_MOCK_DATA:-true}
+        - VITE_MOCK_DATA_SIZE=${VITE_MOCK_DATA_SIZE:-5000}
     container_name: dsa-frontend
     ports:
       - "80:80"

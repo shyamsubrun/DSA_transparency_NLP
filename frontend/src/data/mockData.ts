@@ -3,21 +3,87 @@ import type { ModerationEntry, KPIStats } from './types';
 import type { FilterOptions, FetchEntriesResponse } from './dataService';
 import { PLATFORMS, CATEGORIES, DECISION_TYPES, DECISION_GROUNDS, CONTENT_TYPES, EU_COUNTRIES } from './types';
 
+/** Number of synthetic rows (Vite bake). Default 5000; clamp 500–50000. */
+function parseMockDataSize(): number {
+  const raw = import.meta.env.VITE_MOCK_DATA_SIZE;
+  const fallback = 5000;
+  if (raw === undefined || raw === '') return fallback;
+  const n = parseInt(String(raw), 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(50_000, Math.max(500, n));
+}
+
+export const MOCK_DATA_SIZE = parseMockDataSize();
+
+/** Pick index using weights (same length as items). Heavier = more frequent. */
+function weightedPickIndex(weights: readonly number[]): number {
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < weights.length; i++) {
+    r -= weights[i];
+    if (r < 0) return i;
+  }
+  return weights.length - 1;
+}
+
+function weightedPick<T>(items: readonly T[], weights: readonly number[]): T {
+  return items[weightedPickIndex(weights)] as T;
+}
+
+/**
+ * Platform shares (order = PLATFORMS): large networks dominate; niche / e-commerce tail.
+ * Not uniform — charts show realistic imbalance.
+ */
+const PLATFORM_WEIGHTS: readonly number[] = [
+  26, // Meta
+  20, // TikTok
+  11, // X
+  24, // YouTube
+  7, // LinkedIn
+  6, // Snapchat
+  4, // Pinterest
+  2, // Amazon
+];
+
+/** Categories: common policy areas vs rarer severities (order = CATEGORIES). */
+const CATEGORY_WEIGHTS: readonly number[] = [
+  11, 14, 16, 9, 10, 4, 7, 8, 9, 12, 6, 4,
+];
+
+/** Decision types: removals & restrictions more frequent than geo-block (order = DECISION_TYPES). */
+const DECISION_TYPE_WEIGHTS: readonly number[] = [28, 18, 12, 8, 14, 10, 10];
+
+/** Content types: video/text heavy (order = CONTENT_TYPES). */
+const CONTENT_TYPE_WEIGHTS: readonly number[] = [20, 22, 18, 7, 9, 4];
+
+/** Grounds: ToS / illegal content more often than niche legal bases (order = DECISION_GROUNDS). */
+const DECISION_GROUND_WEIGHTS: readonly number[] = [22, 24, 8, 6, 10, 7, 9, 8, 14, 12];
+
+/** EU countries by index in EU_COUNTRIES: larger MS weight more than small MS. */
+const EU_COUNTRY_WEIGHTS: readonly number[] = EU_COUNTRIES.map((_, i) => {
+  if (i < 5) return 14 - Math.floor(i * 0.5); // DE FR IT ES PL
+  if (i < 12) return 6;
+  if (i < 20) return 4;
+  return 2;
+});
+
 // Generate a random date within a range
 function randomDate(start: Date, end: Date): string {
   const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
   return date.toISOString().split('T')[0];
 }
 
-// Generate a random element from an array
-function randomElement<T>(array: readonly T[]): T {
-  return array[Math.floor(Math.random() * array.length)];
+function randomCountryEntry() {
+  return EU_COUNTRIES[weightedPickIndex(EU_COUNTRY_WEIGHTS)];
 }
 
-// Generate random EU countries array
-function randomCountries(count: number = 3): string[] {
-  const shuffled = [...EU_COUNTRIES].sort(() => 0.5 - Math.random());
-  return shuffled.slice(0, count).map(c => c.code);
+// Generate random EU countries array (primary country weighted; extras for diversity)
+function randomCountries(primaryCode: string, count: number = 3): string[] {
+  const codes = new Set<string>([primaryCode]);
+  while (codes.size < Math.min(count, EU_COUNTRIES.length)) {
+    codes.add(randomCountryEntry().code);
+  }
+  return [...codes];
 }
 
 // Generate a single mock moderation entry
@@ -27,27 +93,31 @@ function generateMockEntry(id: number): ModerationEntry {
   const contentDateStr = randomDate(new Date('2023-01-01'), applicationDate);
   const delayDays = Math.floor((applicationDate.getTime() - new Date(contentDateStr).getTime()) / (1000 * 60 * 60 * 24));
 
+  const countryEntry = randomCountryEntry();
+  const scopeCount = Math.floor(Math.random() * 5) + 1;
+
   return {
     id: `mock-${id}`,
     application_date: applicationDateStr,
     content_date: contentDateStr,
-    platform_name: randomElement(PLATFORMS),
-    category: randomElement(CATEGORIES),
-    decision_type: randomElement(DECISION_TYPES),
-    decision_ground: randomElement(DECISION_GROUNDS),
-    incompatible_content_ground: Math.random() > 0.3 ? `Ground ${Math.floor(Math.random() * 10)}` : null,
-    content_type: randomElement(CONTENT_TYPES),
-    automated_detection: Math.random() > 0.4,
-    automated_decision: Math.random() > 0.5,
-    country: randomElement(EU_COUNTRIES).code,
-    territorial_scope: randomCountries(Math.floor(Math.random() * 5) + 1),
-    language: randomElement(EU_COUNTRIES).lang,
+    platform_name: weightedPick(PLATFORMS, PLATFORM_WEIGHTS),
+    category: weightedPick(CATEGORIES, CATEGORY_WEIGHTS),
+    decision_type: weightedPick(DECISION_TYPES, DECISION_TYPE_WEIGHTS),
+    decision_ground: weightedPick(DECISION_GROUNDS, DECISION_GROUND_WEIGHTS),
+    incompatible_content_ground: Math.random() > 0.35 ? `Ground ${Math.floor(Math.random() * 12)}` : null,
+    content_type: weightedPick(CONTENT_TYPES, CONTENT_TYPE_WEIGHTS),
+    automated_detection: Math.random() > 0.38,
+    automated_decision: Math.random() > 0.48,
+    country: countryEntry.code,
+    territorial_scope: randomCountries(countryEntry.code, scopeCount),
+    language: countryEntry.lang,
     delay_days: delayDays
   };
 }
 
-// Generate mock data array (5000 entries for realistic testing)
-const MOCK_ENTRIES: ModerationEntry[] = Array.from({ length: 5000 }, (_, i) => generateMockEntry(i + 1));
+const MOCK_ENTRIES: ModerationEntry[] = Array.from({ length: MOCK_DATA_SIZE }, (_, i) =>
+  generateMockEntry(i + 1),
+);
 
 // Apply filters to mock data
 function applyFilters(entries: ModerationEntry[], filters?: {
