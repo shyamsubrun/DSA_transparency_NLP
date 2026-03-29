@@ -20,9 +20,10 @@ COPY index.html ./
 COPY vite.config.ts ./
 COPY tsconfig*.json ./
 
-# Build pour production
+# Build pour production — Vite bake les variables VITE_* ici (les .env locaux ne sont pas lus sauf si copiés avant ce RUN).
+# Par défaut: mock data + API relative /api (nginx → backend). Surcharger au build: docker compose build --build-arg VITE_USE_MOCK_DATA=false
 ARG VITE_API_BASE_URL=/api
-ARG VITE_USE_MOCK_DATA=false
+ARG VITE_USE_MOCK_DATA=true
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_USE_MOCK_DATA=$VITE_USE_MOCK_DATA
 RUN npm run build

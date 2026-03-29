@@ -31,7 +31,8 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_API_BASE_URL=/api
-        # Local: mock data par défaut, VM: override via .env ou variable d'environnement
+        # Bake-time only: un fichier .env à la racine du repo (à côté de ce compose) peut définir VITE_USE_MOCK_DATA.
+        # Les frontend/.env ne sont pas utilisés par le build Docker sans les copier dans l'image.
         - VITE_USE_MOCK_DATA=${VITE_USE_MOCK_DATA:-true}
     container_name: dsa-frontend
     ports:
