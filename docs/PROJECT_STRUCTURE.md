@@ -64,7 +64,6 @@ src/
 │       ├── ContentTypeSection.tsx
 │       ├── GeographySection.tsx
 │       ├── LegalGroundsSection.tsx
-│       ├── AutomationSection.tsx
 │       └── Section.module.css
 ├── config/
 │   └── queryClient.ts           # Configuration TanStack Query

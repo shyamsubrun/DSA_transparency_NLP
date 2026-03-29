@@ -6,7 +6,6 @@ import { OverviewSection } from '../Sections/OverviewSection';
 import { TimeSeriesSection } from '../Sections/TimeSeriesSection';
 import { PlatformsSection } from '../Sections/PlatformsSection';
 import { LegalGroundsSection } from '../Sections/LegalGroundsSection';
-import { AutomationSection } from '../Sections/AutomationSection';
 import { GeographySection } from '../Sections/GeographySection';
 import { ContentTypeSection } from '../Sections/ContentTypeSection';
 import { CustomQuerySection } from '../Sections/CustomQuerySection';
@@ -132,7 +131,6 @@ export function Dashboard() {
           <TimeSeriesSection />
           <PlatformsSection />
           <LegalGroundsSection />
-          <AutomationSection />
           <GeographySection />
           <ContentTypeSection />
         </div>

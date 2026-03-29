@@ -8,11 +8,9 @@ import styles from './Section.module.css';
 export function LegalGroundsSection() {
   const { aggregations } = useFilteredData();
 
-  // Sort grounds by count
   const groundsData = Object.entries(aggregations.byDecisionGround)
     .sort((a, b) => b[1] - a[1]);
 
-  // Horizontal bar: Top legal grounds
   const groundsBarOption = {
     ...baseChartOptions,
     grid: { ...baseChartOptions.grid, left: '40%' },
@@ -66,132 +64,6 @@ export function LegalGroundsSection() {
     }],
   };
 
-  // Grouped bar: Legal vs ToS grounds
-  const legalVsTosOption = {
-    ...baseChartOptions,
-    legend: {
-      data: ['Legal Basis', 'Terms of Service'],
-      top: 0,
-      textStyle: { color: '#64748b', fontSize: 12 },
-    },
-    xAxis: {
-      type: 'category',
-      data: ['Grounds Distribution'],
-      axisLine: { show: false },
-      axisLabel: { show: false },
-    },
-    yAxis: {
-      type: 'value',
-      axisLine: { show: false },
-      axisLabel: { color: '#64748b', fontSize: 11 },
-      splitLine: { lineStyle: { color: '#f1f5f9' } },
-    },
-    series: [
-      {
-        name: 'Legal Basis',
-        type: 'bar',
-        data: [aggregations.groundsAnalysis.legal],
-        itemStyle: { color: '#1e3a5f', borderRadius: [4, 4, 0, 0] },
-        barWidth: 80,
-        label: {
-          show: true,
-          position: 'top',
-          color: '#1e293b',
-          fontSize: 14,
-          fontWeight: 600,
-        },
-      },
-      {
-        name: 'Terms of Service',
-        type: 'bar',
-        data: [aggregations.groundsAnalysis.tos],
-        itemStyle: { color: '#0d9488', borderRadius: [4, 4, 0, 0] },
-        barWidth: 80,
-        label: {
-          show: true,
-          position: 'top',
-          color: '#1e293b',
-          fontSize: 14,
-          fontWeight: 600,
-        },
-      },
-    ],
-  };
-
-  // Treemap: Category by decision ground
-  const treemapData = Object.entries(aggregations.categoryByGround).map(([ground, categories]) => {
-    const trimmedGround = ground.trim();
-    return {
-      name: trimmedGround.length > 25 ? trimmedGround.substring(0, 25) + '...' : trimmedGround,
-      children: Object.entries(categories).map(([cat, count]) => ({
-        name: cat.trim(),
-        value: count,
-      })),
-    };
-  });
-
-  const treemapOption = {
-    tooltip: {
-      formatter: (params: unknown) => {
-        const info = params as { name: string; value: number; treePathInfo?: Array<{ name: string }> };
-        const path = (info.treePathInfo ?? []).map(p => p.name).join(' → ');
-        return `${path}<br/>Count: <strong>${info.value}</strong>`;
-      },
-    },
-    series: [{
-      type: 'treemap',
-      data: treemapData,
-      roam: false,
-      nodeClick: false,
-      breadcrumb: {
-        show: true,
-        height: 22,
-        itemStyle: {
-          color: '#f1f5f9',
-          borderColor: '#e2e8f0',
-          textStyle: {
-            color: '#64748b',
-            fontSize: 11,
-          },
-        },
-      },
-      levels: [
-        {
-          itemStyle: {
-            borderColor: '#fff',
-            borderWidth: 2,
-            gapWidth: 2,
-          },
-          upperLabel: {
-            show: true,
-            height: 24,
-            color: '#fff',
-            fontSize: 11,
-            fontWeight: 500,
-            backgroundColor: 'transparent',
-          },
-        },
-        {
-          colorSaturation: [0.35, 0.5],
-          itemStyle: {
-            borderColorSaturation: 0.6,
-            gapWidth: 1,
-          },
-        },
-      ],
-      label: {
-        show: true,
-        formatter: '{b}',
-        fontSize: 10,
-        color: '#fff',
-      },
-      itemStyle: {
-        borderColor: '#fff',
-      },
-    }],
-    color: CHART_COLORS,
-  };
-
   return (
     <section className={styles.section}>
       <div className={styles.header}>
@@ -208,22 +80,9 @@ export function LegalGroundsSection() {
           subtitle="Most frequently cited legal bases"
           option={groundsBarOption as unknown as EChartsOption}
           containerSize="lg"
-        />
-        <ChartWithExport
-          title="Legal Basis vs Terms of Service"
-          subtitle="Distribution of grounds type"
-          option={legalVsTosOption as unknown as EChartsOption}
-          containerSize="default"
-        />
-        <ChartWithExport
-          title="Categories by Decision Ground"
-          subtitle="Hierarchical view of content categories within each legal ground"
-          option={treemapOption as unknown as EChartsOption}
-          containerSize="lg"
           fullWidth
         />
       </div>
     </section>
   );
 }
-

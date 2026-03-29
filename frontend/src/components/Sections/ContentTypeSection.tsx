@@ -53,18 +53,38 @@ export function ContentTypeSection() {
   };
   const stackedBarOption = getResponsiveChartOptions(stackedBarOptionBase, screenSize);
 
-  // Pie: Content type distribution
+  // Pie: Content type distribution — legend must not inherit pieChartOptions' top/right
+  // or it centers on the chart and overlaps the donut.
+  const pieLegend =
+    screenSize === 'mobile'
+      ? {
+          type: 'scroll' as const,
+          orient: 'vertical' as const,
+          right: 8,
+          top: 'middle' as const,
+          textStyle: { color: '#64748b', fontSize: 11 },
+          itemWidth: 12,
+          itemHeight: 12,
+          itemGap: 10,
+        }
+      : {
+          type: 'scroll' as const,
+          orient: 'horizontal' as const,
+          left: 'center' as const,
+          bottom: 8,
+          textStyle: { color: '#64748b', fontSize: 11 },
+          itemWidth: 12,
+          itemHeight: 12,
+          itemGap: 12,
+        };
+
   const pieOptionBase = {
     ...pieChartOptions,
-    legend: {
-      ...pieChartOptions.legend,
-      orient: screenSize === 'mobile' ? 'vertical' : 'horizontal',
-      bottom: 0,
-    },
+    legend: pieLegend,
     series: [{
       type: 'pie',
-      radius: screenSize === 'mobile' ? ['30%', '60%'] : ['40%', '70%'],
-      center: screenSize === 'mobile' ? ['50%', '40%'] : ['50%', '45%'],
+      radius: screenSize === 'mobile' ? ['30%', '55%'] : ['38%', '62%'],
+      center: screenSize === 'mobile' ? ['42%', '50%'] : ['50%', '44%'],
       avoidLabelOverlap: true,
       itemStyle: {
         borderRadius: 6,
