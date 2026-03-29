@@ -3,6 +3,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    # Charge les variables runtime du backend (OPENAI_API_KEY, etc.)
+    env_file:
+      - ./backend/.env
     container_name: dsa-backend
     ports:
       - "3001:3001"
