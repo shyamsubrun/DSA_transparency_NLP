@@ -8,13 +8,22 @@
 //
 import type { ModerationEntry } from './types';
 import type { ChartPlanApiResponse, CustomChartResponse } from './chartPlanTypes';
-import { fetchMockModerationData, fetchMockStats, getFilteredMockEntries, getMockFilterOptions } from './mockData';
+import {
+  fetchMockModerationData,
+  fetchMockStats,
+  getFilteredMockEntries,
+  getMockFilterOptions,
+  MOCK_DATA_SIZE,
+} from './mockData';
 import { aggregateMockEntries, buildMockCustomChartResponse } from './mockCustomChart';
 
 // true = mock data + chart-plan path; false = real API. Default true if unset (aligns with Docker image default).
 const USE_MOCK_DATA = (import.meta.env.VITE_USE_MOCK_DATA ?? 'true') === 'true';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+
+/** Page size for dashboard row fetch. In mock mode, load the full synthetic set so charts match KPIs (see VITE_MOCK_DATA_SIZE). */
+export const MODERATION_ENTRIES_LIMIT = USE_MOCK_DATA ? MOCK_DATA_SIZE : 1000;
 
 export interface FetchEntriesResponse {
   data: ModerationEntry[];

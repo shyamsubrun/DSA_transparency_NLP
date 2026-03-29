@@ -4,10 +4,11 @@ import {
   fetchModerationData,
   fetchFilterOptions,
   fetchStats,
+  MODERATION_ENTRIES_LIMIT,
 } from '../data/dataService';
 import { useFilters } from '../context/FilterContext';
 
-export function useModerationData(page = 1, limit = 1000) {
+export function useModerationData(page = 1, limit = MODERATION_ENTRIES_LIMIT) {
   const { filters } = useFilters();
 
   // Convert FilterState to Filters (null -> undefined)
