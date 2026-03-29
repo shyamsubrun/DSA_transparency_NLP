@@ -73,6 +73,16 @@ function randomDate(start: Date, end: Date): string {
   return date.toISOString().split('T')[0];
 }
 
+/** Sliding window for mock rows: application and content dates only in the last 6 months. */
+function getMockDateWindow(): { start: Date; end: Date } {
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  const start = new Date(end);
+  start.setMonth(start.getMonth() - 6);
+  start.setHours(0, 0, 0, 0);
+  return { start, end };
+}
+
 function randomCountryEntry() {
   return EU_COUNTRIES[weightedPickIndex(EU_COUNTRY_WEIGHTS)];
 }
@@ -91,9 +101,10 @@ function generateMockEntry(id: number): ModerationEntry {
   const platform_name = weightedPick(PLATFORMS, PLATFORM_WEIGHTS);
   const category = weightedPick(CATEGORIES, CATEGORY_WEIGHTS);
 
-  const applicationDateStr = randomDate(new Date('2024-01-01'), new Date('2025-12-31'));
+  const { start: windowStart, end: windowEnd } = getMockDateWindow();
+  const applicationDateStr = randomDate(windowStart, windowEnd);
   const applicationDate = new Date(applicationDateStr);
-  const contentDateStr = randomDate(new Date('2023-01-01'), applicationDate);
+  const contentDateStr = randomDate(windowStart, applicationDate);
   const baseDelayDays = Math.floor(
     (applicationDate.getTime() - new Date(contentDateStr).getTime()) / (1000 * 60 * 60 * 24),
   );
