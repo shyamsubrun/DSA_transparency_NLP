@@ -4,6 +4,36 @@ import { buildChartOptionFromRows } from '../utils/chartFromRows';
 import type { CustomChartResponse } from './chartPlanTypes';
 import { getMockVolumeScale } from './mockData';
 
+const COUNTRY_ALIASES: Record<string, string> = {
+  france: 'FR',
+  fr: 'FR',
+  allemagne: 'DE',
+  germany: 'DE',
+  deutschland: 'DE',
+  de: 'DE',
+};
+
+const PLATFORM_ALIASES: Record<string, string> = {
+  tiktok: 'TikTok',
+  'tik tok': 'TikTok',
+  youtube: 'YouTube',
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  linkedin: 'LinkedIn',
+  xvideos: 'XVideos',
+  'amazon store': 'Amazon Store',
+  amazon: 'Amazon Store',
+  aliexpress: 'AliExpress',
+  pornhub: 'Pornhub',
+  snapchat: 'Snapchat',
+  reddit: 'Reddit',
+  temu: 'Temu',
+  shein: 'Shein',
+  xnxx: 'XNXX',
+  x: 'X',
+  twitter: 'X',
+};
+
 function getDimensionValue(entry: ModerationEntry, dim: ChartAggregationPlan['primaryDimension']): string {
   switch (dim) {
     case 'month':
@@ -31,6 +61,110 @@ function getDimensionValue(entry: ModerationEntry, dim: ChartAggregationPlan['pr
   }
 }
 
+function normalizeText(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function toComparableValue(
+  dimension: ChartAggregationPlan['primaryDimension'],
+  value: string,
+): string {
+  if (dimension === 'country') {
+    return value.trim().toUpperCase();
+  }
+  return normalizeText(value);
+}
+
+function normalizeConstraintValue(
+  dimension: ChartAggregationPlan['primaryDimension'],
+  value: string,
+): string[] {
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  const normalized = normalizeText(trimmed);
+  if (dimension === 'country') {
+    const alias = COUNTRY_ALIASES[normalized];
+    if (alias) return [alias];
+    if (/^[a-z]{2}$/.test(normalized)) return [normalized.toUpperCase()];
+    return [trimmed.toUpperCase()];
+  }
+  if (dimension === 'platform_name') {
+    const alias = PLATFORM_ALIASES[normalized];
+    return [normalizeText(alias || trimmed)];
+  }
+  return [normalized];
+}
+
+function applyPlanConstraints(entries: ModerationEntry[], plan: ChartAggregationPlan): ModerationEntry[] {
+  const constraints = plan.constraints;
+  if (!constraints) return entries;
+
+  return entries.filter((entry) => {
+    for (const [dimension, rule] of Object.entries(constraints)) {
+      const typedDimension = dimension as ChartAggregationPlan['primaryDimension'];
+      const includeRaw = rule?.include || [];
+      const excludeRaw = rule?.exclude || [];
+
+      const include = new Set(
+        includeRaw.flatMap((value) => normalizeConstraintValue(typedDimension, value)),
+      );
+      const exclude = new Set(
+        excludeRaw.flatMap((value) => normalizeConstraintValue(typedDimension, value)),
+      );
+
+      if (!include.size && !exclude.size) continue;
+
+      const actual = toComparableValue(typedDimension, getDimensionValue(entry, typedDimension));
+      if (include.size && !include.has(actual)) {
+        return false;
+      }
+      if (exclude.size && exclude.has(actual)) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
+function warnIfRowsDriftFromConstraints(
+  rows: Record<string, unknown>[],
+  plan: ChartAggregationPlan,
+): void {
+  if (!plan.constraints || !rows.length) return;
+
+  const checks: Array<{ dim: ChartAggregationPlan['primaryDimension']; field: 'dim_a' | 'dim_b' }> = [
+    { dim: plan.primaryDimension, field: 'dim_a' },
+  ];
+  if (plan.secondaryDimension) {
+    checks.push({ dim: plan.secondaryDimension, field: 'dim_b' });
+  }
+
+  for (const check of checks) {
+    const includeRaw = plan.constraints[check.dim]?.include || [];
+    if (!includeRaw.length) continue;
+    const allowed = new Set(includeRaw.flatMap((v) => normalizeConstraintValue(check.dim, v)));
+    const observed = new Set(
+      rows
+        .map((r) => String(r[check.field] ?? ''))
+        .filter(Boolean)
+        .map((v) => toComparableValue(check.dim, v)),
+    );
+    const extras = [...observed].filter((value) => !allowed.has(value));
+    if (extras.length > 0) {
+      console.warn(
+        `[custom-chart] constraint drift detected on ${check.dim}:`,
+        extras,
+        'allowed:',
+        [...allowed],
+      );
+    }
+  }
+}
+
 type AggBucket = { dim_a: string; dim_b?: string; sumDelay: number; count: number };
 
 export function aggregateMockEntries(
@@ -38,8 +172,9 @@ export function aggregateMockEntries(
   plan: ChartAggregationPlan,
 ): Record<string, unknown>[] {
   const buckets = new Map<string, AggBucket>();
+  const constrainedEntries = applyPlanConstraints(entries, plan);
 
-  for (const e of entries) {
+  for (const e of constrainedEntries) {
     const dim_a = getDimensionValue(e, plan.primaryDimension);
     const dim_b = plan.secondaryDimension
       ? getDimensionValue(e, plan.secondaryDimension)
@@ -123,6 +258,7 @@ export function aggregateMockEntries(
     }));
   }
 
+  warnIfRowsDriftFromConstraints(rows, plan);
   return rows;
 }
 

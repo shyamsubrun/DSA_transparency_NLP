@@ -59,6 +59,15 @@ export type MockAggregationMetric = 'count' | 'avg_delay_days';
 
 export type MockAggregationChartType = 'line' | 'bar' | 'pie' | 'heatmap';
 
+export interface ChartValueConstraint {
+  include?: string[];
+  exclude?: string[];
+}
+
+export type ChartAggregationConstraints = Partial<
+  Record<MockChartDimension, ChartValueConstraint>
+>;
+
 /**
  * LLM output for mock-mode charts: aggregation on the client over filtered entries.
  * Row columns are always dim_a, value, and optionally dim_b.
@@ -76,6 +85,7 @@ export interface ChartAggregationPlan {
   xField: 'dim_a';
   yField: 'value';
   seriesField?: 'dim_b';
+  constraints?: ChartAggregationConstraints;
 }
 
 export interface ChartPlanApiResponse {

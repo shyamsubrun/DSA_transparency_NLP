@@ -31,6 +31,15 @@ export type MockAggregationMetric = 'count' | 'avg_delay_days';
 
 export type MockAggregationChartType = 'line' | 'bar' | 'pie' | 'heatmap';
 
+export interface ChartValueConstraint {
+  include?: string[];
+  exclude?: string[];
+}
+
+export type ChartAggregationConstraints = Partial<
+  Record<MockChartDimension, ChartValueConstraint>
+>;
+
 export interface ChartAggregationPlan {
   chartType: MockAggregationChartType;
   title: string;
@@ -44,6 +53,7 @@ export interface ChartAggregationPlan {
   xField: 'dim_a';
   yField: 'value';
   seriesField?: 'dim_b';
+  constraints?: ChartAggregationConstraints;
 }
 
 export interface ChartPlanApiResponse {
