@@ -1,48 +1,20 @@
-export interface AnalyticsFilters {
-  dateRange?: { start: string; end: string };
-  platforms?: string[];
-  categories?: string[];
-  decisionTypes?: string[];
-  decisionGrounds?: string[];
-  countries?: string[];
-  contentTypes?: string[];
-  automatedDetection?: boolean | null;
-  automatedDecision?: boolean | null;
-}
+/** Mirrors backend ChartAggregationPlan for mock-mode custom charts. */
 
-export interface CustomChartRequest {
-  prompt: string;
-  filters?: AnalyticsFilters;
-}
-
-export type SupportedChartType = 'line' | 'bar' | 'pie' | 'scatter' | 'heatmap';
-
-export interface LlmChartPlan {
-  chartType: SupportedChartType;
-  title: string;
-  subtitle?: string;
-  sql: string;
-  xField?: string;
-  yField?: string;
-  valueField?: string;
-  seriesField?: string;
-  explanation?: string;
-}
+import type { EChartsOption } from 'echarts';
 
 export interface CustomChartResponse {
-  chartType: SupportedChartType;
+  chartType: 'line' | 'bar' | 'pie' | 'scatter' | 'heatmap';
   title: string;
   subtitle: string;
   explanation: string;
   sql?: string;
   columns: string[];
   rows: Record<string, unknown>[];
-  echartsOption: Record<string, unknown>;
+  echartsOption: EChartsOption;
   cached: boolean;
   durationMs: number;
 }
 
-/** Dimensions aligned with frontend mock ModerationEntry (no SQL). */
 export type MockChartDimension =
   | 'month'
   | 'platform_name'
@@ -59,10 +31,6 @@ export type MockAggregationMetric = 'count' | 'avg_delay_days';
 
 export type MockAggregationChartType = 'line' | 'bar' | 'pie' | 'heatmap';
 
-/**
- * LLM output for mock-mode charts: aggregation on the client over filtered entries.
- * Row columns are always dim_a, value, and optionally dim_b.
- */
 export interface ChartAggregationPlan {
   chartType: MockAggregationChartType;
   title: string;

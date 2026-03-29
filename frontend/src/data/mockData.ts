@@ -107,6 +107,21 @@ function applyFilters(entries: ModerationEntry[], filters?: {
   return filtered;
 }
 
+/** Full mock dataset filtered like other mock APIs (for custom chart aggregation). */
+export function getFilteredMockEntries(filters?: {
+  dateRange?: { start: string; end: string };
+  platforms?: string[];
+  categories?: string[];
+  decisionTypes?: string[];
+  decisionGrounds?: string[];
+  countries?: string[];
+  contentTypes?: string[];
+  automatedDetection?: boolean | null;
+  automatedDecision?: boolean | null;
+}): ModerationEntry[] {
+  return applyFilters(MOCK_ENTRIES, filters);
+}
+
 // Calculate KPI stats from filtered data
 function calculateStats(entries: ModerationEntry[]): KPIStats {
   const totalActions = entries.length;

@@ -7,8 +7,9 @@
 // To switch modes, change the USE_MOCK_DATA constant below.
 //
 import type { ModerationEntry } from './types';
-import type { EChartsOption } from 'echarts';
-import { fetchMockModerationData, fetchMockStats, getMockFilterOptions } from './mockData';
+import type { ChartPlanApiResponse, CustomChartResponse } from './chartPlanTypes';
+import { fetchMockModerationData, fetchMockStats, getFilteredMockEntries, getMockFilterOptions } from './mockData';
+import { aggregateMockEntries, buildMockCustomChartResponse } from './mockCustomChart';
 
 // Set to true to use mock data, false to use real API
 const USE_MOCK_DATA = (import.meta.env.VITE_USE_MOCK_DATA ?? 'false') === 'true';
@@ -61,18 +62,7 @@ export interface CustomChartRequest {
   filters?: Filters;
 }
 
-export interface CustomChartResponse {
-  chartType: 'line' | 'bar' | 'pie' | 'scatter' | 'heatmap';
-  title: string;
-  subtitle: string;
-  explanation: string;
-  sql?: string;
-  columns: string[];
-  rows: Record<string, unknown>[];
-  echartsOption: EChartsOption;
-  cached: boolean;
-  durationMs: number;
-}
+export type { CustomChartResponse } from './chartPlanTypes';
 
 /**
  * Fetch moderation data with filters and pagination
@@ -200,8 +190,32 @@ export async function fetchCustomChart(
   prompt: string,
   filters?: Filters,
 ): Promise<CustomChartResponse> {
+  const started = Date.now();
+
+  // Mock KPIs are local; GPT plan still requires the backend (OPENAI_API_KEY server-side).
   if (USE_MOCK_DATA) {
-    throw new Error('Custom chart requires API mode (VITE_USE_MOCK_DATA=false).');
+    const planRes = await fetch(`${API_BASE_URL}/analytics/chart-plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, filters }),
+    });
+
+    if (!planRes.ok) {
+      const errorData = await planRes.json().catch(() => ({}));
+      throw new Error(
+        (errorData as { message?: string }).message ||
+          (errorData as { error?: string }).error ||
+          `Failed to get chart plan: ${planRes.statusText}`,
+      );
+    }
+
+    const body = (await planRes.json()) as ChartPlanApiResponse;
+    const filtered = getFilteredMockEntries(filters);
+    const rows = aggregateMockEntries(filtered, body.plan);
+    return buildMockCustomChartResponse(body.plan, rows, {
+      planCached: body.cached,
+      totalDurationMs: Date.now() - started,
+    });
   }
 
   const response = await fetch(`${API_BASE_URL}/analytics/custom-chart`, {

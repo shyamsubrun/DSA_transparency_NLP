@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as analyticsService from '../services/analytics.service.js';
+import * as chartPlanService from '../services/chartPlan.service.js';
 import type { AnalyticsFilters } from '../types/analytics.types.js';
 
 function sanitizeArray(value: unknown): string[] | undefined {
@@ -34,6 +35,28 @@ function sanitizeFilters(raw: unknown): AnalyticsFilters | undefined {
     automatedDecision:
       typeof f.automatedDecision === 'boolean' ? f.automatedDecision : null,
   };
+}
+
+export async function generateChartPlan(req: Request, res: Response) {
+  const startedAt = Date.now();
+  try {
+    const prompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
+    if (!prompt) {
+      res.status(400).json({ error: 'Prompt is required.' });
+      return;
+    }
+
+    const filters = sanitizeFilters(req.body?.filters);
+    const result = await chartPlanService.generateChartPlan({ prompt, filters });
+    res.json(result);
+  } catch (error) {
+    console.error('[analytics] generateChartPlan error', error);
+    res.status(500).json({
+      error: 'Failed to generate chart plan',
+      message: error instanceof Error ? error.message : 'Unknown error',
+      durationMs: Date.now() - startedAt,
+    });
+  }
 }
 
 export async function generateCustomChart(req: Request, res: Response) {
