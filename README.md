@@ -1,6 +1,9 @@
 # DSA Dashboard
 
 Dashboard pour visualiser les données de modération DSA (Digital Services Act).
+## Rapport
+
+[Rapport_technique_BIGDATA.pdf](https://github.com/user-attachments/files/26686895/Rapport_technique_BIGDATA.pdf)
 
 ## Structure du projet
 
